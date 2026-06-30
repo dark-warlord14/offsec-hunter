@@ -23,9 +23,9 @@ actually changed.
   "entry_points": [
     {
       "id": "ep-1",
-      "kind": "http | websocket | rpc | consumer | job",
+      "kind": "http | websocket | rpc | consumer | job | cli | file-input | ipc | local-service",
       "route": "POST /api/fetch",
-      "auth": "unauth | session | m2m",
+      "auth": "unauth | session | m2m | local-user | input-supplier",
       "handler": "path/to/handler.ext:LINE"
     }
   ],
@@ -52,7 +52,7 @@ actually changed.
       "to_sink": "sink-1",
       "input_path": "body.url -> validate() -> http.get()",
       "guards": ["allowlist check at file.ext:LINE"],
-      "reachable_from": "unauth"
+      "reachable_from": "unauth | session | m2m | local-user | input-supplier"
     }
   ]
 }
@@ -64,3 +64,6 @@ actually changed.
   input can plausibly reach the sink.
 - `flows` is what Phase 1 fans out over — each flow is a hypothesis seed.
 - Record `guards` honestly; Phase 2's job is to determine whether they actually hold.
+- Non-web targets are first-class: an `entry_point` may be a parsed input file
+  (`file-input`), a CLI, an IPC/socket, or a local service. Record these the same
+  way — the Phase 0.5 threat-model checkpoint reasons over whatever the map shows.

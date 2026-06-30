@@ -5,7 +5,7 @@ Date: 2026-06-26
 ## Purpose
 
 A reusable, budget-aware, adversarial vulnerability-hunting skill that finds
-**externally reachable, exploitable** vulnerabilities triggered by an HTTP
+**externally reachable, exploitable** vulnerabilities triggered **by default** by an HTTP
 request, a chain of HTTP requests, or a WebSocket message — from an unauthenticated
 or normal-user session. The goal is not code review; the goal is to break the target.
 
@@ -77,8 +77,10 @@ structurally impossible because the next phase has nothing to read.
 
 ### Scope rules
 
-- Trigger MUST be an external request: HTTP, a chain of HTTP requests, or a
-  WebSocket message, from an **unauth or normal-user session**.
+- **Default** trigger (confirmed/overridden at the Phase 0.5 checkpoint): an
+  external request — HTTP, a chain of HTTP requests, or a WebSocket message,
+  from an **unauth or normal-user session**. Non-web targets (input-file →
+  memory-safety, local service → DoS) are scoped in at the checkpoint.
 - Auth-gated calls reachable by a normal user are **in scope**.
 - m2m-auth-gated calls are **out of scope** unless an auth bypass lets an
   outsider reach them — that bypass is itself the finding.
@@ -97,6 +99,11 @@ sweep) before any recon. No silent default.
   points → trust boundaries → high-risk sinks, stamped with the git commit it was
   built from. **Skip if a fresh map exists** (its commit == `HEAD`). The map
   doubles as a reachability index that prunes the hunt.
+- **Phase 0.5 — Threat-model checkpoint.** Propose a target-specific threat
+  model (attacker position, delivery vector, impact/win condition, scope notes)
+  inferred from the map; the user always confirms or edits it; write
+  `.offsec-hunter/threat-model.md`. Phase 1 is gated on this file. See
+  `docs/superpowers/specs/2026-06-30-flexible-reachability-design.md`.
 - **Phase 1 — Cheap fan-out.** Dispatch many shallow subagents on a cheap/fast
   model, each chasing one hypothesis ("does any handler fetch a user-supplied
   URL?"). They return candidate sink + input path, not verdicts. →

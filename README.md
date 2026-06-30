@@ -2,7 +2,7 @@
 
 An adversarial, budget-aware vulnerability-hunting skill for **Claude Code** and
 **Codex**. It hunts for **externally reachable, exploitable** vulnerabilities — SSRF,
-RCE, SQLi, SSTI, auth-bypass, IDOR and other high-impact classes — triggered by an HTTP
+RCE, SQLi, SSTI, auth-bypass, IDOR and other high-impact classes — triggered **by default** by an HTTP
 request, a chain of HTTP requests, or a WebSocket message from an unauth or normal-user
 session.
 
@@ -17,6 +17,11 @@ One portable skill (`offsec-hunter`) runs a gated pipeline:
 0. **Map** — build/refresh a reusable attack-surface map (entry points → trust boundaries
    → sinks), stamped with the git commit. Skipped automatically if a fresh map exists, so
    you don't re-pay recon cost on every run.
+0.5. **Threat-model checkpoint** — propose a target-specific threat model
+   (attacker position, delivery vector, win condition) from the map; you confirm
+   or edit it before the hunt proceeds. Lets non-web targets (untrusted input
+   file → memory-safety bug, local service → DoS) be scoped in, not just web
+   requests.
 1. **Fan-out** — many cheap subagents generate vulnerability hypotheses (recall).
 2. **Validate** — stronger subagents adversarially confirm reachability (precision).
 3. **Synthesis** — confirmed findings + a working PoC (curl / request chain) per finding.
