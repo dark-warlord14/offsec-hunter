@@ -12,24 +12,23 @@ The goal is not code review. The goal is to break the target.
 
 ## How it works
 
-One portable skill (`offsec-hunter`) runs a gated pipeline:
+One plugin, six composable skills. The orchestrator chains five flat, artifact-gated
+steps — each reads the previous step's file artifact and refuses to run if it is missing
+or stale, so the workflow runs in order every time:
 
-0. **Map** — build/refresh a reusable attack-surface map (entry points → trust boundaries
-   → sinks), stamped with the git commit. Skipped automatically if a fresh map exists, so
-   you don't re-pay recon cost on every run.
-0.5. **Threat-model checkpoint** — propose a target-specific threat model
-   (attacker position, delivery vector, win condition) from the map; you confirm
-   or edit it before the hunt proceeds. Lets non-web targets (untrusted input
-   file → memory-safety bug, local service → DoS) be scoped in, not just web
-   requests.
-1. **Fan-out** — many cheap subagents generate vulnerability hypotheses (recall).
-2. **Validate** — stronger subagents adversarially confirm reachability (precision).
-3. **Synthesis** — confirmed findings + a working PoC (curl / request chain) per finding.
+1. **map-attack-surface** — build/refresh a reusable, commit-stamped attack-surface map.
+2. **scope-target** — define the hunting goal: vuln class + confirmed threat model
+   (attacker position, delivery vector, win condition). Interactive confirms with you;
+   headless accepts and logs.
+3. **raise-hypotheses** — many cheap subagents generate hypotheses (recall).
+4. **break-hypotheses** — stronger subagents adversarially confirm reachability (precision).
+5. **prove-exploit** — confirmed findings + a working PoC, as `findings.md` (human) and
+   `findings.json` (machine), with an empty-results report when nothing is exploitable.
 
-Each phase is gated on the previous phase's file artifact (in `.offsec-hunter/`), so the
-workflow runs in order every time. The skill body is platform-neutral; per-platform tool
-mapping lives in
-[`skills/offsec-hunter/references/platform-tools.md`](skills/offsec-hunter/references/platform-tools.md).
+Run a completed hunt again to **steer** it: edit the artifact at the right level
+(`surface-map.json`, `target.md`, `hypotheses.jsonl`, …) and only the stale steps re-run;
+results merge additively. The skill bodies are platform-neutral; per-platform tool mapping
+lives in [`skills/offsec-hunter/references/platform-tools.md`](skills/offsec-hunter/references/platform-tools.md).
 
 ## Install
 
@@ -46,14 +45,14 @@ cd offsec-hunter
 
 ```bash
 mkdir -p ~/.claude/skills
-cp -R skills/offsec-hunter ~/.claude/skills/offsec-hunter
+cp -R skills/* ~/.claude/skills/
 ```
 
 ### Codex
 
 ```bash
 mkdir -p ~/.codex/skills
-cp -R skills/offsec-hunter ~/.codex/skills/offsec-hunter
+cp -R skills/* ~/.codex/skills/
 ```
 
 Restart Codex after installing so it re-scans the skills directory. Re-run the `cp -R`
@@ -76,12 +75,18 @@ sweep) before starting.
 ```
 offsec-hunter/
 ├── README.md  ·  LICENSE  ·  .gitignore
-├── docs/superpowers/specs/2026-06-26-offsec-hunter-design.md
-└── skills/offsec-hunter/
-    ├── SKILL.md                  # the portable skill (open agent-skills standard)
-    └── references/
-        ├── platform-tools.md
-        └── surface-map.md
+├── .claude-plugin/plugin.json
+├── docs/superpowers/specs/  ·  docs/superpowers/plans/
+├── tests/                         # static contract + behavioral recall tests
+└── skills/
+    ├── offsec-hunter/             # orchestrator
+    │   ├── SKILL.md
+    │   └── references/{platform-tools.md, artifacts.md}
+    ├── map-attack-surface/        # step 1  (references/surface-map.md)
+    ├── scope-target/              # step 2
+    ├── raise-hypotheses/          # step 3
+    ├── break-hypotheses/          # step 4
+    └── prove-exploit/             # step 5
 ```
 
 The full design rationale is in
@@ -89,6 +94,9 @@ The full design rationale is in
 
 ## Run-time artifacts
 
-When the skill runs against a target, it writes its working artifacts to
-`.offsec-hunter/` at that target's repo root. Add `.offsec-hunter/` to the target's
-`.gitignore` — these are local recon/findings, not source.
+When the skill runs against a target, it writes working artifacts under the **output
+root** — by default `<target>/.offsec-hunter/` (add `.offsec-hunter/` to the target's
+`.gitignore`), or a central `~/.offsec-hunter/<target-id>/` when the target tree is
+read-only. Per-hunt artifacts are namespaced `hunts/<VULN>/` so different vuln classes
+never clobber each other. See
+[`skills/offsec-hunter/references/artifacts.md`](skills/offsec-hunter/references/artifacts.md).
