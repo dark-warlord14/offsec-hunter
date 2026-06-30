@@ -1,0 +1,5 @@
+# Run-time artifacts the skill writes against a target (never source)
+.offsec-hunter/
+
+# OS / editor noise
+.DS_Store
