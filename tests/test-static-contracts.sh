@@ -50,4 +50,13 @@ assert_file_contains "$S" '[Aa]ttacker position' "step2 covers attacker position
 assert_file_contains "$S" '[Dd]elivery vector' "step2 covers delivery vector"
 assert_file_contains "$S" '[Ww]in condition' "step2 covers win condition"
 
+# --- raise-hypotheses (Task 5) ---
+R="skills/raise-hypotheses/SKILL.md"
+assert_file_contains "$R" '^name: raise-hypotheses' "step3 frontmatter name"
+assert_file_contains "$R" 'target\.md' "step3 reads target.md"
+assert_file_contains "$R" 'scope-target first' "step3 actionable missing-input error"
+assert_file_contains "$R" 'hypotheses\.jsonl' "step3 writes hypotheses.jsonl"
+assert_file_contains "$R" '[Rr]ecall' "step3 optimizes recall"
+assert_file_contains "$R" '(cheap|fast)' "step3 uses cheap/fast model"
+
 summary
