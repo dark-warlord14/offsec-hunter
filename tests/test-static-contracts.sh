@@ -59,4 +59,13 @@ assert_file_contains "$R" 'hypotheses\.jsonl' "step3 writes hypotheses.jsonl"
 assert_file_contains "$R" '[Rr]ecall' "step3 optimizes recall"
 assert_file_contains "$R" '(cheap|fast)' "step3 uses cheap/fast model"
 
+# --- break-hypotheses (Task 6) ---
+B="skills/break-hypotheses/SKILL.md"
+assert_file_contains "$B" '^name: break-hypotheses' "step4 frontmatter name"
+assert_file_contains "$B" 'hypotheses\.jsonl' "step4 reads hypotheses.jsonl"
+assert_file_contains "$B" 'raise-hypotheses first' "step4 actionable missing-input error"
+assert_file_contains "$B" 'survivors\.jsonl' "step4 writes survivors.jsonl"
+assert_file_contains "$B" '(break the claim|try to break)' "step4 is adversarial"
+assert_file_contains "$B" '(stronger|strong)' "step4 uses a stronger model"
+
 summary
