@@ -5,7 +5,7 @@ Date: 2026-06-26
 ## Purpose
 
 A reusable, budget-aware, adversarial vulnerability-hunting skill that finds
-**externally reachable, exploitable** vulnerabilities triggered by an HTTP
+**externally reachable, exploitable** vulnerabilities triggered **by default** by an HTTP
 request, a chain of HTTP requests, or a WebSocket message — from an unauthenticated
 or normal-user session. The goal is not code review; the goal is to break the target.
 

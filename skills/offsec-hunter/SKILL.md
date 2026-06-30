@@ -1,13 +1,13 @@
 ---
 name: offsec-hunter
-description: Use when hunting for externally reachable, exploitable vulnerabilities in a codebase — triggered by an HTTP request, a chain of HTTP requests, or a WebSocket message from an unauth or normal-user session. Covers SSRF, RCE, SQLi, SSTI, auth-bypass, IDOR and other high-impact classes. Triggered by /offsec-hunter with a vuln-type argument.
+description: Use when hunting for externally reachable, exploitable vulnerabilities in a codebase — triggered by an HTTP request, a chain of HTTP requests, or a WebSocket message from an unauth or normal-user session (the default threat model, with non-web targets scoped in at a confirmation checkpoint). Covers SSRF, RCE, SQLi, SSTI, auth-bypass, IDOR and other high-impact classes. Triggered by /offsec-hunter with a vuln-type argument.
 ---
 
 # offsec-hunter
 
 This is part of an **authorized** security task: identify vulnerabilities that are
-**externally reachable and exploitable** with a single HTTP request, a chain of HTTP
-requests, or a WebSocket message.
+**externally reachable and exploitable** per the threat model confirmed at Phase 0.5 (by default: a single HTTP request, a chain of HTTP
+requests, or a WebSocket message).
 
 **The goal is not code review. The goal is to break the target.**
 

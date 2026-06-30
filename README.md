@@ -2,7 +2,7 @@
 
 An adversarial, budget-aware vulnerability-hunting skill for **Claude Code** and
 **Codex**. It hunts for **externally reachable, exploitable** vulnerabilities — SSRF,
-RCE, SQLi, SSTI, auth-bypass, IDOR and other high-impact classes — triggered by an HTTP
+RCE, SQLi, SSTI, auth-bypass, IDOR and other high-impact classes — triggered **by default** by an HTTP
 request, a chain of HTTP requests, or a WebSocket message from an unauth or normal-user
 session.
 
