@@ -38,4 +38,16 @@ assert_file_contains "$M" 'surface-map\.md' "step1 references its schema"
 assert_file_exists "skills/map-attack-surface/references/surface-map.md" "schema moved to step1"
 assert_file_absent "skills/offsec-hunter/references/surface-map.md" "schema no longer under orchestrator"
 
+# --- scope-target (Task 4) ---
+S="skills/scope-target/SKILL.md"
+assert_file_contains "$S" '^name: scope-target' "step2 frontmatter name"
+assert_file_contains "$S" 'surface-map\.json' "step2 reads surface-map.json"
+assert_file_contains "$S" 'map-attack-surface first' "step2 actionable missing-input error"
+assert_file_contains "$S" 'target\.md' "step2 writes target.md"
+assert_file_contains "$S" 'interactive' "step2 has interactive branch"
+assert_file_contains "$S" 'headless' "step2 has headless branch"
+assert_file_contains "$S" '[Aa]ttacker position' "step2 covers attacker position"
+assert_file_contains "$S" '[Dd]elivery vector' "step2 covers delivery vector"
+assert_file_contains "$S" '[Ww]in condition' "step2 covers win condition"
+
 summary
