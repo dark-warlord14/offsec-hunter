@@ -26,7 +26,7 @@ attacker-controlled source, and the path between them. Append candidates to
 `hunts/<VULN>/hypotheses.jsonl`, one JSON object per line:
 
 ```json
-{"id": "h-1", "sink": "sink-3", "source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
+{"id": "h-1", "sink": "sink-3", "suspected_source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
 ```
 
 Record the step done in `state.json` with the `input_hash` of `target.md`.

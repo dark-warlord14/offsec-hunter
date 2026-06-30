@@ -11,7 +11,7 @@ model. Writes `hunts/<VULN>/target.md` under the output root.
 ## Gate
 
 Read `surface-map.json` (target-level). If it is missing or stale, stop:
-**"no fresh `surface-map.json` — map-attack-surface first."** Do not proceed on a
+**"no fresh `surface-map.json` — run map-attack-surface first."** Do not proceed on a
 missing or stale map.
 
 ## Procedure

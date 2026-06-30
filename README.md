@@ -32,8 +32,8 @@ lives in [`skills/offsec-hunter/references/platform-tools.md`](skills/offsec-hun
 
 ## Install
 
-`offsec-hunter` is a single [open-standard](https://agentskills.io/specification) skill —
-it works in Claude Code and Codex unmodified. Clone the repo once, then copy the skill
+`offsec-hunter` is a plugin of six composable [open-standard](https://agentskills.io/specification) skills —
+they work in Claude Code and Codex unmodified. Clone the repo once, then copy the skills
 into each tool's skills directory.
 
 ```bash
