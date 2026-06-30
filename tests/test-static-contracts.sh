@@ -68,4 +68,21 @@ assert_file_contains "$B" 'survivors\.jsonl' "step4 writes survivors.jsonl"
 assert_file_contains "$B" '(break the claim|try to break)' "step4 is adversarial"
 assert_file_contains "$B" '(stronger|strong)' "step4 uses a stronger model"
 
+# --- prove-exploit (Task 7) ---
+P="skills/prove-exploit/SKILL.md"
+assert_file_contains "$P" '^name: prove-exploit' "step5 frontmatter name"
+assert_file_contains "$P" 'survivors\.jsonl' "step5 reads survivors.jsonl"
+assert_file_contains "$P" 'break-hypotheses first' "step5 actionable missing-input error"
+assert_file_contains "$P" 'findings\.json' "step5 emits machine-readable findings"
+assert_file_contains "$P" 'findings\.md' "step5 emits human-readable findings"
+assert_file_contains "$P" 'no exploitable findings' "step5 has empty-results report"
+assert_file_contains "$P" 'entry-point \+ sink' "step5 documents additive-merge dedup key"
+assert_file_contains "$P" 'pocs/' "step5 writes runnable PoCs"
+
+# --- shared-refs do not leak into step skills (all dirs now exist) ---
+for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove-exploit; do
+  assert_file_absent "skills/$d/references/platform-tools.md" "$d has no platform-tools.md"
+  assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
+done
+
 summary
