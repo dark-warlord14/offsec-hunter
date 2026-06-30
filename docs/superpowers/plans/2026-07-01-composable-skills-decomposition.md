@@ -100,6 +100,12 @@ assert_file_exists() {
   else echo "  [FAIL] $label — missing: $file"; FAIL=$((FAIL+1)); fi
 }
 
+assert_file_absent() {
+  local file="$1" label="$2"
+  if [ ! -e "$REPO_ROOT/$file" ]; then echo "  [PASS] $label"; PASS=$((PASS+1));
+  else echo "  [FAIL] $label — should not exist: $file"; FAIL=$((FAIL+1)); fi
+}
+
 assert_file_contains() {
   local file="$1" pattern="$2" label="$3"
   if grep -Eq "$pattern" "$REPO_ROOT/$file" 2>/dev/null; then echo "  [PASS] $label"; PASS=$((PASS+1));
@@ -205,10 +211,6 @@ assert_file_contains "$O" '[Ss]teer' "orchestrator documents steering"
 assert_file_contains "$O" 'artifacts\.md' "orchestrator references artifacts guide by name"
 assert_file_exists "skills/offsec-hunter/references/artifacts.md" "artifacts guide exists"
 assert_no_cross_skill_paths "no cross-skill relative paths"
-# artifacts.md / platform-tools.md must NOT leak into other skill dirs
-for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove-exploit; do
-  assert_file_not_contains "/dev/null" "x" "noop" 2>/dev/null || true
-done
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -452,10 +454,8 @@ assert_file_contains "$M" 'surface-map\.json' "step1 writes surface-map.json"
 assert_file_contains "$M" 'rev-parse HEAD' "step1 commit-stamps freshness"
 assert_file_contains "$M" 'surface-map\.md' "step1 references its schema"
 assert_file_exists "skills/map-attack-surface/references/surface-map.md" "schema moved to step1"
-assert_file_not_contains "skills/offsec-hunter/references/surface-map.md" "." "schema no longer under orchestrator" 2>/dev/null || true
+assert_file_absent "skills/offsec-hunter/references/surface-map.md" "schema no longer under orchestrator"
 ```
-
-(Note: the last assertion passes because the file no longer exists — `grep` on a missing file yields no match.)
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -820,6 +820,12 @@ assert_file_contains "$P" 'findings\.md' "step5 emits human-readable findings"
 assert_file_contains "$P" 'no exploitable findings' "step5 has empty-results report"
 assert_file_contains "$P" 'entry-point \+ sink' "step5 documents additive-merge dedup key"
 assert_file_contains "$P" 'pocs/' "step5 writes runnable PoCs"
+
+# --- shared-refs do not leak into step skills (all dirs now exist) ---
+for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove-exploit; do
+  assert_file_absent "skills/$d/references/platform-tools.md" "$d has no platform-tools.md"
+  assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
+done
 ```
 
 - [ ] **Step 2: Run to verify it fails**
