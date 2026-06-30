@@ -62,8 +62,8 @@ actually changed.
 
 - Keep it a **reachability index**, not a full code dump. A flow exists only if external
   input can plausibly reach the sink.
-- `flows` is what Phase 1 fans out over — each flow is a hypothesis seed.
-- Record `guards` honestly; Phase 2's job is to determine whether they actually hold.
+- `flows` is what `raise-hypotheses` fans out over — each flow is a hypothesis seed.
+- Record `guards` honestly; `break-hypotheses`'s job is to determine whether they hold.
 - Non-web targets are first-class: an `entry_point` may be a parsed input file
   (`file-input`), a CLI, an IPC/socket, or a local service. Record these the same
-  way — the Phase 0.5 threat-model checkpoint reasons over whatever the map shows.
+  way — the `scope-target` checkpoint reasons over whatever the map shows.
