@@ -29,4 +29,13 @@ assert_file_contains "$O" 'artifacts\.md' "orchestrator references artifacts gui
 assert_file_exists "skills/offsec-hunter/references/artifacts.md" "artifacts guide exists"
 assert_no_cross_skill_paths "no cross-skill relative paths"
 
+# --- map-attack-surface (Task 3) ---
+M="skills/map-attack-surface/SKILL.md"
+assert_file_contains "$M" '^name: map-attack-surface' "step1 frontmatter name"
+assert_file_contains "$M" 'surface-map\.json' "step1 writes surface-map.json"
+assert_file_contains "$M" 'rev-parse HEAD' "step1 commit-stamps freshness"
+assert_file_contains "$M" 'surface-map\.md' "step1 references its schema"
+assert_file_exists "skills/map-attack-surface/references/surface-map.md" "schema moved to step1"
+assert_file_absent "skills/offsec-hunter/references/surface-map.md" "schema no longer under orchestrator"
+
 summary
