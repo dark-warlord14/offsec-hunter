@@ -11,4 +11,22 @@ assert_file_contains ".claude-plugin/plugin.json" '"name"[[:space:]]*:[[:space:]
 
 # (subsequent tasks append their assertion blocks below)
 
+# --- Orchestrator (Task 2) ---
+O="skills/offsec-hunter/SKILL.md"
+assert_file_contains "$O" '^name: offsec-hunter' "orchestrator frontmatter name"
+assert_file_contains "$O" 'map-attack-surface' "orchestrator names step 1"
+assert_file_contains "$O" 'scope-target' "orchestrator names step 2"
+assert_file_contains "$O" 'raise-hypotheses' "orchestrator names step 3"
+assert_file_contains "$O" 'break-hypotheses' "orchestrator names step 4"
+assert_file_contains "$O" 'prove-exploit' "orchestrator names step 5"
+assert_file_contains "$O" 'interactive' "orchestrator documents interactive mode"
+assert_file_contains "$O" 'headless' "orchestrator documents headless mode"
+assert_file_contains "$O" 'state\.json' "orchestrator references state.json"
+assert_file_contains "$O" '[Tt]arget root' "orchestrator resolves target root"
+assert_file_contains "$O" '[Oo]utput root' "orchestrator resolves output root"
+assert_file_contains "$O" '[Ss]teer' "orchestrator documents steering"
+assert_file_contains "$O" 'artifacts\.md' "orchestrator references artifacts guide by name"
+assert_file_exists "skills/offsec-hunter/references/artifacts.md" "artifacts guide exists"
+assert_no_cross_skill_paths "no cross-skill relative paths"
+
 summary

@@ -18,6 +18,7 @@ tools. The skill never depends on a platform-specific orchestration engine.
 Notes:
 - Claude Code: do NOT use `subagent_type: "general"` — it is invalid; the catch-all is
   `general-purpose`.
-- If a platform lacks parallel subagents, run the Phase 1 hypotheses sequentially on the
-  cheap model — the artifact-gating and phase order are unchanged.
-- The orchestrator (the main session) always does Phase 0 reasoning and Phase 3 synthesis.
+- If a platform lacks parallel subagents, run the `raise-hypotheses` step's hypotheses
+  sequentially on the cheap model — the artifact-gating and step order are unchanged.
+- The orchestrator (the main session) always resolves roots/mode and runs `prove-exploit`
+  synthesis itself.
