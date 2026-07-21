@@ -99,7 +99,7 @@ Each round:
    - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
      no family covers yet; keep at least one agent on each still-productive incompatible
      route so routes stay alive across rounds.
-   - Append a one-line entry to `state.json.round_log` and to `run.md`. Increment
+   - Append a one-line entry to `state.json.round_log`. Increment
      `dry_streak` on a dry round; reset it to 0 on a productive round (one that produced a
      new survivor or a materially-new family).
 4. **Stop rule**: exit after **2 consecutive dry rounds** (a dry round = no new survivor
@@ -124,9 +124,11 @@ dedups, and writes the line to `hypotheses.jsonl` or `survivors.jsonl`.
 
 ### run.md dashboard
 
-At loop exit the orchestrator writes `run.md`: rounds executed, the family registry
-(open/blocked + counts), the per-round lines, and the final findings with their trace ids.
-Steered re-runs append (matching `prove-exploit`'s additive merge).
+The orchestrator **regenerates** `run.md` from `state.json` + `findings.json` on **any** step-5
+completion (loop exit or steered re-run). The dashboard shows: rounds executed, the family
+registry (open/blocked + counts), the per-round lines, and the final findings with their
+trace ids. This single-owner regenerate ensures consistency across steered re-runs (idempotent,
+no appending).
 
 ## Vuln class
 

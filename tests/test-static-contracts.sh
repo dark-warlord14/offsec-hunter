@@ -161,4 +161,8 @@ assert_file_contains "$B" 'candidate.*fields|full fields' "break injects the can
 assert_file_contains "$O" 'chain' "orchestrator assembles chains at synthesis"
 assert_file_contains "$B" 'chainable|flag' "break only flags chainability"
 
+# --- v2: run.md single owner (Task 15) ---
+assert_file_contains "$O" 'regenerate' "orchestrator regenerates run.md"
+assert_file_contains "$P" 'not.*run\.md|orchestrator.*run\.md' "prove defers run.md to orchestrator"
+
 summary
