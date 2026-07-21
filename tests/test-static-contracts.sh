@@ -153,4 +153,8 @@ assert_file_contains "$O" 'distinct sink|guard-bypass' "orchestrator defines mat
 assert_file_contains "$R" '"mechanism"' "hypotheses carry a mechanism field"
 assert_file_contains "$A" '"mechanism"' "artifacts document the mechanism field"
 
+# --- v2: break context injection (Task 13) ---
+assert_file_contains "$B" 'output_root|inject' "break injects context into subagents"
+assert_file_contains "$B" 'candidate.*fields|full fields' "break injects the candidate's fields"
+
 summary

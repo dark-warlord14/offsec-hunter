@@ -31,6 +31,11 @@ guide) to trace it across files and attempt to refute it:
   exist — see map-attack-surface) to reach the win condition? A survivor may be a
   multi-step chain (e.g. auth-bypass → RCE).
 
+Because a break subagent sees only its prompt, **inject its context** — pass `output_root`,
+`target_root`, the exact artifact paths to read (`surface-map.json`, `target.md`,
+`hypotheses.jsonl`), and the **full fields of the specific candidate** being refuted
+(`id`, `sink`, `suspected_source`, `path`, `mechanism`).
+
 Drop anything that fails any check. Each subagent returns its verdict **untagged** — no
 `id`: it keys the survivor by `hypothesis` and `sink`, carrying the candidate fields, an
 ordered `chain` (hypothesis ids), `severity` + `confidence`, and the guards examined and
