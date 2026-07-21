@@ -124,4 +124,10 @@ assert_file_contains "$B" '"severity"' "step4 carries severity"
 assert_file_contains "$B" '"confidence"' "step4 carries confidence"
 assert_file_contains "$B" '[Dd]ependenc' "step4 chains dependency bugs when present"
 
+# --- prove trace + dashboard (Task 6) ---
+assert_file_contains "$P" '"survivor"' "step5 traces finding to survivor"
+assert_file_contains "$P" '"sink"' "step5 traces finding to sink"
+assert_file_contains "$P" '"confidence"' "step5 carries confidence"
+assert_file_contains "$P" 'run\.md' "step5 contributes to run.md dashboard"
+
 summary
