@@ -108,7 +108,8 @@ Each round:
 
 ### Context-injection contract (critical)
 
-A subagent sees only its delegation prompt plus CLAUDE.md — not the orchestrator's invoked
+A subagent sees only its delegation prompt plus whatever always-on project context the
+platform auto-loads (`CLAUDE.md` on Claude Code, `AGENTS.md` on Codex) — not the orchestrator's invoked
 skills, conversation, or files already read. Every raise/break delegation prompt MUST
 **inject**: `output_root` and `target_root`, the exact artifact paths to read, the assigned
 `sink-N` id + its family, and a one-line threat-model summary. The family registry stays
@@ -132,7 +133,7 @@ no appending).
 
 ## Vuln class
 
-Hunt for: **$ARGUMENTS**
+Hunt for: **the vuln class the user provided when invoking this skill (or `broad` if none)**
 
 The chosen class is confirmed inside `scope-target` and written into `target.md`. If no
 class was provided: interactive → `scope-target` asks; headless → default to `broad` and

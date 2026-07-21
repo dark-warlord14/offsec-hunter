@@ -165,4 +165,9 @@ assert_file_contains "$B" 'chainable|flag' "break only flags chainability"
 assert_file_contains "$O" 'regenerate' "orchestrator regenerates run.md"
 assert_file_contains "$P" 'not.*run\.md|orchestrator.*run\.md' "prove defers run.md to orchestrator"
 
+# --- v2: codex portability (Task 16) ---
+assert_file_contains "skills/offsec-hunter/references/platform-tools.md" 'AGENTS\.md' "platform-tools maps always-on context"
+assert_file_not_contains "$O" '\$ARGUMENTS' "orchestrator body has no \$ARGUMENTS token"
+assert_file_not_contains "$S" '\$ARGUMENTS' "scope body has no \$ARGUMENTS token"
+
 summary

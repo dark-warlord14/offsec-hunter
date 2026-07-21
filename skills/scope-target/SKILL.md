@@ -19,7 +19,8 @@ missing or stale map.
 The map now tells you what an exploit plausibly looks like for **this** target — use it
 instead of assuming the web default.
 
-1. **Pick the vuln class.** Use the `$ARGUMENTS` class passed to the orchestrator. If none
+1. **Pick the vuln class.** Use the vuln class the user provided when invoking this skill
+   (or `broad` if none). If none
    was given: interactive → ask which class (`SSRF`, `RCE`, `SQLi`, `SSTI`, `auth-bypass`,
    `IDOR`, … or `broad`); headless → default to `broad` and log it.
 
