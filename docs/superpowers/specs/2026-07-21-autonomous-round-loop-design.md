@@ -230,3 +230,107 @@ and reduce portability).
 - Behavioral-recall test covers the loop doctrine (dry-round exit, blocked/reopen,
   redirect) at instruction level.
 - A `rounds = 1` path must reproduce today's single-pass behaviour (regression guard).
+
+---
+
+# Corrections (v2) — post-audit
+
+An adversarial audit (five reviewers: Agent-Skills standard, Claude Code, Codex,
+loop-logic, harness/tests) found the v1 loop under-specified in ways that let it miscount,
+double-count, collide ids, or fail to terminate, and left two platform-portability leaks.
+These corrections resolve each. They supersede v1 where they conflict.
+
+## A. Loop-logic corrections
+
+**A1 — Round-tagged artifacts.** Every `hypotheses.jsonl` and `survivors.jsonl` line carries
+`"round": N`. "This round's" records are exactly `line.round == state.round`. Synthesis
+counts new survivors/families by filtering on `round`, never by line-count deltas (which a
+compacted orchestrator cannot recompute).
+
+**A2 — The round loop drives raise/break by round, independent of staleness.** The
+`input_hash` staleness gate governs **steering only**. Inside the loop, raise and break
+re-run every round regardless of whether `target.md` changed. `break` processes **only the
+current round's** hypotheses (`round == state.round`). Survivors are de-duplicated on write
+by key `hypothesis + sink + chain` (mirroring prove's dedup) so re-entry never
+double-appends.
+
+**A3 — The orchestrator is the sole id authority.** Raise/break subagents run in isolation
+and return **untagged candidates keyed by `sink`**; the orchestrator assigns globally-unique
+`h-N` ids and family ids when it writes the jsonl. This removes `h-1`-collision across
+parallel agents and across rounds, and keeps the family registry coherent (subagents never
+invent family ids). Traceability (`finding → survivor → hypothesis → sink`) is therefore
+guaranteed unique.
+
+**A4 —`materially-new` is operational; termination without a hard cap.** A family/mechanism
+is *materially-new* iff it introduces a **distinct sink OR a distinct guard-bypass mechanism**
+— not merely a distinct label. A blocked family reopens only when a hypothesis names a
+guard/step **absent from that family's recorded mechanisms**. Each candidate therefore emits
+a `mechanism` field (sink + guard-bypass) that synthesis compares machine-to-machine, not by
+prose. This makes a reworded idea *not* reset `dry_streak`, so the dry-round rule terminates.
+Per the scoping decision the only stop rule remains 2 dry rounds; `round > 6` stays a loud
+soft-warning, not a hard cap.
+
+**A5 — Canonical `state.json` with round fields + initializer.** There is one canonical
+`state.json` schema containing `round`, `dry_streak`, `families`, `round_log` alongside the
+existing keys. The orchestrator initializes `round=1, dry_streak=0, families=[],
+round_log=[]` before the first raise. `dry_streak` increments on a dry round and resets to 0
+on a productive one.
+
+**A6 — `break` states its own context-injection contract.** Like raise, break's dispatch
+prompt must inject: `output_root`, `target_root`, the artifact paths to read
+(`surface-map.json`, `target.md`, `hypotheses.jsonl`), and the **full fields of the specific
+candidate** being refuted (id, sink, suspected source, path, mechanism). An isolated break
+subagent never relies on inherited context.
+
+**A7 — Resume is atomic and idempotent.** Step status is `{status:"looping",
+last_round:N}`. A step advances `last_round` in the **same** `state.json` write that records
+its completion; re-running a step for a round it already recorded is a **no-op**. Combined
+with A1's round tags, a crash-and-resume never double-appends.
+
+**A8 — Chaining is evaluated at the synthesis layer.** Building a multi-step `chain`
+requires seeing sibling candidates, which an isolated break subagent cannot. Therefore the
+**orchestrator/synthesis** assembles chains from the round's candidate set (it holds them
+all); break only flags "this candidate looks chainable and why." No chain is lost to
+isolation.
+
+**A9 — `run.md` has one owner and is regenerated idempotently.** `run.md` is fully
+regenerated from `state.json` + `findings.json` on **any** step-5 completion (loop exit or
+steered re-run), by the orchestrator. Prove does not append to it. This removes the
+two-writer divergence on steers that don't re-enter the loop.
+
+**A10 — Blocked-reopen uses the `mechanism` field.** Per A4, synthesis judges reopen by
+comparing a candidate's `mechanism` field against the family's recorded mechanisms — never
+by free prose — so the compact-summary restriction no longer blocks a correct decision.
+
+## B. Standards & portability corrections
+
+**B1 — Platform-neutral always-on context.** Replace the hardcoded `CLAUDE.md` in the
+context-injection rule with "whatever always-on project context the platform auto-loads
+(`CLAUDE.md` on Claude Code, `AGENTS.md` on Codex)". Add a `platform-tools.md` row mapping
+"always-on project context".
+
+**B2 — No `$ARGUMENTS` in skill bodies.** Reword to "the vuln class the user provided when
+invoking this skill (or `broad` if none)". Argument-delivery mechanics live only in
+`platform-tools.md`, mapped per platform.
+
+**B3 — Generic subagent fallback.** `platform-tools.md`'s sequential-fallback note applies to
+**any** per-item subagent step (raise *and* break), not just raise. Name a concrete Codex
+primitive where one exists; otherwise state the sequential fallback explicitly.
+
+**B4 — Descriptions state what + when.** The five step-skill descriptions gain a "Use when …"
+trigger clause (open-standard requires what *and* when).
+
+**B5 — Standalone-trigger guard.** Each step skill states: if `state.json` is absent, stop
+with "run the `offsec-hunter` orchestrator first" — so a directly-triggered step never runs
+without resolved roots/mode.
+
+## C. Polish & tests
+
+- **C1** — `artifacts.md` shows one merged, round-aware canonical `state.json`
+  (`looping`/`last_round`), not the stale `pending` shape or two disjoint snippets.
+- **C2** — Replace the vacuous `[Ii]f|when|present` assertion with one anchored to the
+  conditional-dependency sentence.
+- **C3** — Add a test for the `rounds = 1` single-pass regression guard.
+- **C4** — Add `guards` to the survivor field enumeration; note its shape; add an explicit
+  `origin` field on sinks marking dependency (vendored) sinks; align PoC wording across
+  README / frontmatter / body.
