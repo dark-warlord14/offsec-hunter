@@ -55,3 +55,43 @@ orchestrator and recorded in `state.json`:
 - Each downstream artifact records the hash of its inputs (`input_hash` in `state.json`).
   If an input changed since the artifact was written, the artifact is **stale** — re-run
   that step. This is what makes steering re-run exactly the affected steps.
+
+## Round state & family registry
+
+The hunt runs in rounds; all round state lives in `state.json` so a fresh or compacted
+orchestrator resumes mid-hunt (a **resumable** loop). Each round starts by reading
+`state.json`.
+
+```json
+{
+  "round": 2,
+  "dry_streak": 1,
+  "families": [
+    {"id":"f-deser","label":"PHP object deserialization","status":"open",
+     "agents":2,"hypotheses":["h-1","h-4"],"last_new_round":2,"notes":"..."}
+  ],
+  "round_log": [
+    {"round":1,"raised":12,"survived":2,"new_families":5,"redirects":["blocked f-cache"]},
+    {"round":2,"raised":9,"survived":0,"new_families":0,"redirects":["blocked f-deser"]}
+  ]
+}
+```
+
+- `families[].status` ∈ `open | blocked`. A blocked family reopens only on a
+  materially-new mechanism.
+- A round is **dry** when it yields no new survivor AND no new family. Exit after 2 dry
+  rounds in a row; log a loud warning when `round > 6`.
+
+## Stable ids & forward references
+
+Every artifact carries ids so a finding traces back to a mapped sink:
+
+- `surface-map.json` sink: `"id": "sink-3"`.
+- `hypotheses.jsonl` line: adds `"family"` and `"sink"`.
+- `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered step
+  ids for multi-step chains), `"severity"`, `"confidence"`.
+- `findings.json`: adds `"survivor"`, `"hypothesis"`, `"sink"`, `"severity"`,
+  `"confidence"` — the full trace `finding → survivor → hypothesis → sink`.
+
+`run.md` is a human-readable dashboard written at loop exit (rounds, family registry,
+per-round lines, findings with trace ids).

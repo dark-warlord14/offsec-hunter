@@ -85,4 +85,14 @@ for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove
   assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
 done
 
+# --- Round-loop artifacts (Task 1) ---
+A="skills/offsec-hunter/references/artifacts.md"
+assert_file_contains "$A" '"round"' "artifacts documents round field"
+assert_file_contains "$A" '"dry_streak"' "artifacts documents dry_streak field"
+assert_file_contains "$A" '"families"' "artifacts documents family registry"
+assert_file_contains "$A" '"round_log"' "artifacts documents round_log"
+assert_file_contains "$A" 'sink-[0-9]' "artifacts documents stable sink ids"
+assert_file_contains "$A" '[Rr]esumable' "artifacts documents resumable loop"
+assert_file_contains "$A" '"chain"' "artifacts documents chain field"
+
 summary
