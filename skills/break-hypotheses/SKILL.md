@@ -27,9 +27,11 @@ guide) to trace it across files and attempt to refute it:
   vector in `target.md`)?
 - Does the result meet the **confirmed win condition** (so a DoS or memory-safety crash
   counts when the user scoped it in)?
-- Can it **chain** with another candidate or a **dependency bug** (when dependency sinks
-  exist — see map-attack-surface) to reach the win condition? A survivor may be a
-  multi-step chain (e.g. auth-bypass → RCE).
+- Is it **chainable** — does it look like it could chain with another candidate or a
+  **dependency bug** (when dependency sinks exist — see map-attack-surface) to reach the
+  win condition? A survivor may be part of a multi-step chain (e.g. auth-bypass → RCE).
+  **Flag** chainability; the orchestrator assembles the actual chain from the round's
+  candidates.
 
 Because a break subagent sees only its prompt, **inject its context** — pass `output_root`,
 `target_root`, the exact artifact paths to read (`surface-map.json`, `target.md`,

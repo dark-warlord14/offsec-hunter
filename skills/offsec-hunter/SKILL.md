@@ -87,6 +87,10 @@ Each round:
 3. **Synthesize** (orchestrator, reading only compact summaries + this round's jsonl —
    never full subagent transcripts):
    - Count new survivors and new families.
+   - **Assemble chains** from the round's candidate set: for each chainable survivor, the
+     orchestrator constructs the ordered `chain` field (a list of hypothesis ids) by
+     matching it with other survivors that can chain together. Break subagents only flag
+     chainability; the orchestrator assembles the multi-step chain.
    - Mark any family that produced nothing new as **blocked** (materially-new means a
      **distinct sink** or a **distinct guard-bypass mechanism**, not a distinct label). A
      blocked family reopens **only when** a hypothesis names a guard or step absent from

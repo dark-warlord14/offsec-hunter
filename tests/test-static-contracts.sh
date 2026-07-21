@@ -157,4 +157,8 @@ assert_file_contains "$A" '"mechanism"' "artifacts document the mechanism field"
 assert_file_contains "$B" 'output_root|inject' "break injects context into subagents"
 assert_file_contains "$B" 'candidate.*fields|full fields' "break injects the candidate's fields"
 
+# --- v2: chaining at synthesis (Task 14) ---
+assert_file_contains "$O" 'chain' "orchestrator assembles chains at synthesis"
+assert_file_contains "$B" 'chainable|flag' "break only flags chainability"
+
 summary
