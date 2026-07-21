@@ -8,7 +8,8 @@ description: Step 3 of offsec-hunter. Cheap, wide fan-out — dispatch many shal
 **Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
 
 Generate many candidate vulnerabilities. Optimize for **recall, not precision** — a later
-step breaks them. Writes `hunts/<VULN>/hypotheses.jsonl`.
+step breaks them. Produces candidates for `hunts/<VULN>/hypotheses.jsonl` (the orchestrator
+writes the file).
 
 ## Gate
 

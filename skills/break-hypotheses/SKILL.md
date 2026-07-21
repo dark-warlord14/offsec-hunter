@@ -8,7 +8,8 @@ description: Step 4 of offsec-hunter. Deep adversarial validation — dispatch s
 **Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
 
 Adversarially validate each candidate. The job is to **try to break the claim**, not to
-confirm it. Writes `hunts/<VULN>/survivors.jsonl`.
+confirm it. Produces candidates for `hunts/<VULN>/survivors.jsonl` (the orchestrator writes
+the file).
 
 ## Gate
 
