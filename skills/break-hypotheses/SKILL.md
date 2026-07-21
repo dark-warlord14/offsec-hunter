@@ -24,7 +24,17 @@ guide) to trace it across files and attempt to refute it:
   vector in `target.md`)?
 - Does the result meet the **confirmed win condition** (so a DoS or memory-safety crash
   counts when the user scoped it in)?
+- Can it **chain** with another candidate or a **dependency bug** (when dependency sinks
+  exist — see map-attack-surface) to reach the win condition? A survivor may be a
+  multi-step chain (e.g. auth-bypass → RCE).
 
 Drop anything that fails any check. Append confirmed-reachable survivors to
 `hunts/<VULN>/survivors.jsonl`, carrying the candidate fields plus the guards examined and
-why they hold/fail. Record the step done in `state.json`.
+why they hold/fail. Each survivor references its `hypothesis` and `sink` ids, an ordered
+`chain` (step ids), and `severity` + `confidence`:
+
+```json
+{"id":"s-2","hypothesis":"h-4","sink":"sink-3","chain":["h-7","h-4"],"severity":"high","confidence":"medium","guards":"nonce check bypassed via ..."}
+```
+
+Record the step done in `state.json`.

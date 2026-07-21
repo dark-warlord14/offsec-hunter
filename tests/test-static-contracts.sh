@@ -117,4 +117,11 @@ assert_file_contains "$R" '"sink"' "step3 references the sink id"
 assert_file_contains "$R" '[Rr]ound' "step3 is round-aware"
 assert_file_contains "$R" 'output_root|inject' "step3 injects context into subagents"
 
+# --- break chaining + trace (Task 5) ---
+assert_file_contains "$B" '[Cc]hain' "step4 documents bug-chaining"
+assert_file_contains "$B" '"chain"' "step4 records chain field on survivors"
+assert_file_contains "$B" '"severity"' "step4 carries severity"
+assert_file_contains "$B" '"confidence"' "step4 carries confidence"
+assert_file_contains "$B" '[Dd]ependenc' "step4 chains dependency bugs when present"
+
 summary
