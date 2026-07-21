@@ -26,7 +26,14 @@ attacker-controlled source, and the path between them. Append candidates to
 `hunts/<VULN>/hypotheses.jsonl`, one JSON object per line:
 
 ```json
-{"id": "h-1", "sink": "sink-3", "suspected_source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
+{"id": "h-1", "family": "f-ssrf-fetch", "sink": "sink-3", "suspected_source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
 ```
+
+This step is **round-aware**: on each round the orchestrator tells you which families to
+expand and which mapped sinks are still uncovered. Because a dispatched subagent sees only
+its prompt, **inject its context** — pass `output_root`, `target_root`, the exact artifact
+paths to read (`surface-map.json`, `hunts/<VULN>/target.md`), the assigned `sink-N` id and
+family, and a one-line threat-model summary. Tag every hypothesis line with its `family`
+and `sink`.
 
 Record the step done in `state.json` with the `input_hash` of `target.md`.

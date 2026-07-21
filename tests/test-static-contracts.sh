@@ -111,4 +111,10 @@ assert_file_contains "$A" 'sink-[0-9]' "artifacts documents stable sink ids"
 assert_file_contains "$A" '[Rr]esumable' "artifacts documents resumable loop"
 assert_file_contains "$A" '"chain"' "artifacts documents chain field"
 
+# --- raise round-aware + ids (Task 4) ---
+assert_file_contains "$R" '"family"' "step3 tags hypotheses with a family"
+assert_file_contains "$R" '"sink"' "step3 references the sink id"
+assert_file_contains "$R" '[Rr]ound' "step3 is round-aware"
+assert_file_contains "$R" 'output_root|inject' "step3 injects context into subagents"
+
 summary
