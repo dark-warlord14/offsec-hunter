@@ -12,9 +12,10 @@ The goal is not code review. The goal is to break the target.
 
 ## How it works
 
-One plugin, six composable skills. The orchestrator chains five flat, artifact-gated
+One plugin, six composable skills. The orchestrator chains five artifact-gated
 steps — each reads the previous step's file artifact and refuses to run if it is missing
-or stale, so the workflow runs in order every time:
+or stale, so the ordered flow holds every time; steps 3-4 (raise-hypotheses,
+break-hypotheses) iterate as a round loop within that order:
 
 1. **map-attack-surface** — build/refresh a reusable, commit-stamped attack-surface map.
 2. **scope-target** — define the hunting goal: vuln class + confirmed threat model

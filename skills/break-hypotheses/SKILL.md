@@ -31,7 +31,7 @@ guide) to trace it across files and attempt to refute it:
 Drop anything that fails any check. Append confirmed-reachable survivors to
 `hunts/<VULN>/survivors.jsonl`, carrying the candidate fields plus the guards examined and
 why they hold/fail. Each survivor references its `hypothesis` and `sink` ids, an ordered
-`chain` (step ids), and `severity` + `confidence`:
+`chain` (hypothesis ids), and `severity` + `confidence`:
 
 ```json
 {"id":"s-2","hypothesis":"h-4","sink":"sink-3","chain":["h-7","h-4"],"severity":"high","confidence":"medium","guards":"nonce check bypassed via ..."}

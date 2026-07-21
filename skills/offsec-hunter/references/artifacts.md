@@ -79,7 +79,7 @@ orchestrator resumes mid-hunt (a **resumable** loop). Each round starts by readi
 
 - `families[].status` ∈ `open | blocked`. A blocked family reopens only on a
   materially-new mechanism.
-- A round is **dry** when it yields no new survivor AND no new family. Exit after 2 dry
+- A round is **dry** when it yields no new survivor AND no materially-new family. Exit after 2 dry
   rounds in a row; log a loud warning when `round > 6`.
 
 ## Stable ids & forward references
@@ -88,7 +88,7 @@ Every artifact carries ids so a finding traces back to a mapped sink:
 
 - `surface-map.json` sink: `"id": "sink-3"`.
 - `hypotheses.jsonl` line: adds `"family"` and `"sink"`.
-- `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered step
+- `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered hypothesis
   ids for multi-step chains), `"severity"`, `"confidence"`.
 - `findings.json`: adds `"survivor"`, `"hypothesis"`, `"sink"`, `"severity"`,
   `"confidence"` — the full trace `finding → survivor → hypothesis → sink`.

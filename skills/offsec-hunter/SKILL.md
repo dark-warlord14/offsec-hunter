@@ -83,9 +83,11 @@ Each round:
    - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
      no family covers yet; keep at least one agent on each still-productive incompatible
      route so routes stay alive across rounds.
-   - Append a one-line entry to `state.json.round_log` and to `run.md`.
+   - Append a one-line entry to `state.json.round_log` and to `run.md`. Increment
+     `dry_streak` on a dry round; reset it to 0 on a productive round (one that produced a
+     new survivor or a materially-new family).
 4. **Stop rule**: exit after **2 consecutive dry rounds** (a dry round = no new survivor
-   AND no new family). Soft backstop: log a loud warning when `round > 6` (the dry-round
+   AND no materially-new family). Soft backstop: log a loud warning when `round > 6` (the dry-round
    rule still governs; the warning is auditability, not a hard cap).
 
 ### Context-injection contract (critical)
