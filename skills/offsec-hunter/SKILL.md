@@ -63,9 +63,77 @@ Declare the run mode and record it in `state.json`:
 Print a compact progress line read from `state.json` (e.g. `✅ 1–2  ▶ 3`) so a returning
 human or a resuming agent knows the next action.
 
+## Round loop (steps 3–4)
+
+Steps 1 (map) and 2 (scope) run once. Steps 3 (raise) and 4 (break) are the body of a
+**round loop**. Step 5 (prove) runs once at loop exit. With a single productive round this
+is exactly the old single-pass flow.
+
+**Initialization:** Before the first `raise-hypotheses` run, the orchestrator initializes
+`round=1`, `dry_streak=0`, `families=[]`, and `round_log=[]` in `state.json`.
+
+The loop **drives raise/break by round**, independent of staleness. They re-run every
+round regardless of whether `target.md` changed; the staleness gate applies only to
+steering (user-driven redirects).
+
+Each round:
+
+1. **Read `state.json`** for the resume point (`round`, `dry_streak`, `families`). This is
+   what makes the loop **resumable** — a fresh or compacted orchestrator continues instead
+   of restarting. Each step tracks its completion in `state.json` with a `status` field
+   and `last_round`; re-running a step for a round it already recorded is a **no-op**
+   (already recorded in `last_round`), so crashes and resume never double-append.
+2. Run `raise-hypotheses` then `break-hypotheses` for this round.
+3. **Synthesize** (orchestrator, reading only compact summaries + this round's jsonl —
+   never full subagent transcripts):
+   - Count new survivors and new families.
+   - **Assemble chains** from the round's candidate set: for each chainable survivor, the
+     orchestrator constructs the ordered `chain` field (a list of hypothesis ids) by
+     matching it with other survivors that can chain together. Break subagents only flag
+     chainability; the orchestrator assembles the multi-step chain.
+   - Mark any family that produced nothing new as **blocked** (materially-new means a
+     **distinct sink** or a **distinct guard-bypass mechanism**, not a distinct label). A
+     blocked family reopens **only when** a hypothesis names a guard or step absent from
+     that family's recorded mechanisms — synthesis makes this determination by comparing
+     the `mechanism` field machine-to-machine, never by comparing prose or labels.
+   - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
+     no family covers yet; keep at least one agent on each still-productive incompatible
+     route so routes stay alive across rounds.
+   - Append a one-line entry to `state.json.round_log`. Increment
+     `dry_streak` on a dry round; reset it to 0 on a productive round (one that produced a
+     new survivor or a materially-new family).
+4. **Stop rule**: exit after **2 consecutive dry rounds** (a dry round = no new survivor
+   AND no materially-new family). Soft backstop: log a loud warning when `round > 6` (the dry-round
+   rule still governs; the warning is auditability, not a hard cap).
+
+### Context-injection contract (critical)
+
+A subagent sees only its delegation prompt plus whatever always-on project context the
+platform auto-loads (`CLAUDE.md` on Claude Code, `AGENTS.md` on Codex) — not the orchestrator's invoked
+skills, conversation, or files already read. Every raise/break delegation prompt MUST
+**inject**: `output_root` and `target_root`, the exact artifact paths to read, the assigned
+`sink-N` id + its family, and a one-line threat-model summary. The family registry stays
+orchestrator-only; a subagent receives only its slice in-prompt.
+
+**The orchestrator is the sole id authority.** Under subagent isolation, parallel raise/break
+subagents cannot see each other's ids and would collide if left to invent their own. So
+subagents never assign `h-N`, `family`, or `chain`: they return untagged judgments keyed
+by `sink` — `mechanism`/`rationale` (raise) or `severity`/`confidence` + a chainability
+flag (break), never a built chain. Only the orchestrator assigns globally-unique `h-N`
+ids and `family` ids, assembles the ordered `chain` from the round's full candidate set,
+dedups, and writes the line to `hypotheses.jsonl` or `survivors.jsonl`.
+
+### run.md dashboard
+
+The orchestrator **regenerates** `run.md` from `state.json` + `findings.json` on **any** step-5
+completion (loop exit or steered re-run). The dashboard shows: rounds executed, the family
+registry (open/blocked + counts), the per-round lines, and the final findings with their
+trace ids. This single-owner regenerate ensures consistency across steered re-runs (idempotent,
+no appending).
+
 ## Vuln class
 
-Hunt for: **$ARGUMENTS**
+Hunt for: **the vuln class the user provided when invoking this skill (or `broad` if none)**
 
 The chosen class is confirmed inside `scope-target` and written into `target.md`. If no
 class was provided: interactive → `scope-target` asks; headless → default to `broad` and

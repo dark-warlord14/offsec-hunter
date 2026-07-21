@@ -41,6 +41,7 @@ actually changed.
   "sinks": [
     {
       "id": "sink-1",
+      "origin": "target | dependency",
       "class": "ssrf | rce | sqli | ssti | deserialization | authz | parsing",
       "location": "path/to/file.ext:LINE",
       "summary": "outbound HTTP fetch of a request-supplied URL"

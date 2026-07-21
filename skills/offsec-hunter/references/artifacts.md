@@ -23,26 +23,36 @@ orchestrator and recorded in `state.json`:
       findings.md
       findings.json
       pocs/
-        finding-001.sh
+        finding-001.md
 ```
 
-## state.json
+## state.json (canonical example)
 
 ```json
 {
   "target_root": "/abs/path/to/target",
   "output_root": "/abs/path/to/target/.offsec-hunter",
   "mode": "interactive",
-  "vuln": "SSRF",
+  "vuln": "RCE",
+  "round": 2,
+  "dry_streak": 1,
+  "families": [
+    {"id": "f-deser", "label": "PHP object deserialization", "status": "open",
+     "agents": 2, "hypotheses": ["h-1", "h-4"], "last_new_round": 2, "notes": "gadget chain via wp_options autoload"}
+  ],
   "steps": {
     "map-attack-surface": {"status": "done", "artifact": "surface-map.json", "commit": "<HEAD>", "at": "<iso8601>"},
-    "scope-target":       {"status": "done", "artifact": "hunts/SSRF/target.md", "input_hash": "<sha256 of surface-map.json>", "at": "<iso8601>"},
-    "raise-hypotheses":   {"status": "pending"},
-    "break-hypotheses":   {"status": "pending"},
+    "scope-target":       {"status": "done", "artifact": "hunts/RCE/target.md", "input_hash": "<sha256>", "at": "<iso8601>"},
+    "raise-hypotheses":   {"status": "looping", "last_round": 2},
+    "break-hypotheses":   {"status": "looping", "last_round": 2},
     "prove-exploit":      {"status": "pending"}
   },
+  "round_log": [
+    {"round": 1, "raised": 12, "survived": 2, "new_families": 5, "redirects": ["blocked f-cache", "boost f-deser"]},
+    {"round": 2, "raised": 9, "survived": 0, "new_families": 0, "redirects": ["blocked f-deser"]}
+  ],
   "steer_log": [
-    {"at": "<iso8601>", "feedback": "focus on auth-bypass", "edited": "hunts/SSRF/target.md", "reran_from": "raise-hypotheses"}
+    {"at": "<iso8601>", "feedback": "focus on auth-bypass", "edited": "hunts/RCE/target.md", "reran_from": "raise-hypotheses"}
   ]
 }
 ```
@@ -53,5 +63,51 @@ orchestrator and recorded in `state.json`:
   (e.g. "no `surface-map.json` — run `map-attack-surface` first").
 - `surface-map.json` is **fresh** iff its `commit == git rev-parse HEAD`; otherwise rebuild.
 - Each downstream artifact records the hash of its inputs (`input_hash` in `state.json`).
-  If an input changed since the artifact was written, the artifact is **stale** — re-run
-  that step. This is what makes steering re-run exactly the affected steps.
+  The `input_hash` staleness gate **governs steering only** (user-driven redirects that
+  re-run only the affected steps). Inside the loop, `raise-hypotheses` and
+  `break-hypotheses` re-run every round regardless of whether `target.md` changed; this
+  keeps the round hypothesis-space diverse and fresh.
+
+## Round state & family registry
+
+The hunt runs in rounds; all round state lives in `state.json` so a fresh or compacted
+orchestrator resumes mid-hunt (a **resumable** loop). Each round starts by reading
+`state.json`. See the canonical example above for the complete structure including
+`round`, `dry_streak`, `families`, `round_log`, and step status fields.
+
+- `families[].status` ∈ `open | blocked`. A blocked family reopens only on a
+  materially-new mechanism — a distinct sink or guard-bypass, judged by comparing the
+  `mechanism` field (see the orchestrator round-loop section).
+- A round is **dry** when it yields no new survivor AND no materially-new family. Exit after 2 dry
+  rounds in a row; log a loud warning when `round > 6`.
+
+## Stable ids & forward references
+
+Every artifact carries ids so a finding traces back to a mapped sink. The **orchestrator is
+the sole id authority**: raise/break subagents return untagged candidates keyed by `sink` —
+raise returns `mechanism`/`rationale`; break returns `severity`/`confidence` plus a
+chainability flag (not a built `chain`). The orchestrator assigns the globally-unique `id`
+(`h-N` / `s-N`) and `family` only when it writes the line, and assembles the ordered `chain`
+itself at synthesis.
+
+- `surface-map.json` sink: `"id": "sink-3"`, `"origin": "target | dependency"` (marking vendored vs target sinks).
+- `hypotheses.jsonl` line: adds `"family"`, `"sink"`, `"round"` (the round it was raised
+  in), and `"mechanism"` (sink + guard-bypass).
+- `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered hypothesis
+  ids for multi-step chains), `"severity"`, `"confidence"`, `"guards"` (narrative of examined guards), and `"round"` (the round it was
+  broken in).
+- `findings.json`: adds `"survivor"`, `"hypothesis"`, `"sink"`, `"severity"`,
+  `"confidence"` — the full trace `finding → survivor → hypothesis → sink`.
+
+Every `hypotheses.jsonl`/`survivors.jsonl` line carries `"round"`. "This round" means
+`line.round == state.round` — that is how `break-hypotheses` selects only the hypotheses
+just raised, and how synthesis counts only this round's new survivors/families.
+
+**Survivor dedup key**: the **orchestrator** dedups on write during synthesis, after `chain`
+is assembled, by `hypothesis + sink + chain` — a survivor matching an existing line on that
+key is not re-appended (e.g. re-confirmed after a redirect, or reached via more than one
+route).
+
+`run.md` is a human-readable dashboard regenerated by the orchestrator on any `prove-exploit`
+completion (loop exit or steered re-run) — rounds, family registry, per-round lines, findings
+with trace ids.

@@ -12,9 +12,10 @@ The goal is not code review. The goal is to break the target.
 
 ## How it works
 
-One plugin, six composable skills. The orchestrator chains five flat, artifact-gated
+One plugin, six composable skills. The orchestrator chains five artifact-gated
 steps — each reads the previous step's file artifact and refuses to run if it is missing
-or stale, so the workflow runs in order every time:
+or stale, so the ordered flow holds every time; steps 3-4 (raise-hypotheses,
+break-hypotheses) iterate as a round loop within that order:
 
 1. **map-attack-surface** — build/refresh a reusable, commit-stamped attack-surface map.
 2. **scope-target** — define the hunting goal: vuln class + confirmed threat model
@@ -23,7 +24,16 @@ or stale, so the workflow runs in order every time:
 3. **raise-hypotheses** — many cheap subagents generate hypotheses (recall).
 4. **break-hypotheses** — stronger subagents adversarially confirm reachability (precision).
 5. **prove-exploit** — confirmed findings + a working PoC, as `findings.md` (human) and
-   `findings.json` (machine), with an empty-results report when nothing is exploitable.
+   `findings.json` (machine), each PoC a minimal `pocs/finding-NNN.md` (one-line summary +
+   the exact curl / request chain / WebSocket message in a fenced block), with an
+   empty-results report when nothing is exploitable.
+
+Steps 3–4 run as an **autonomous round loop**: the orchestrator raises hypotheses, breaks
+them, then synthesizes and redirects — grouping ideas into a family registry, blocking
+stalled routes, and launching new rounds until two rounds in a row are dry. All round
+state lives in `state.json`, so the loop is resumable. At the end the orchestrator
+regenerates a human-readable `run.md` dashboard (rounds, families, findings with their
+`finding → survivor → hypothesis → sink` trace ids).
 
 Run a completed hunt again to **steer** it: edit the artifact at the right level
 (`surface-map.json`, `target.md`, `hypotheses.jsonl`, …) and only the stale steps re-run;
@@ -90,7 +100,9 @@ offsec-hunter/
 ```
 
 The full design rationale is in
-[`docs/superpowers/specs/2026-06-26-offsec-hunter-design.md`](docs/superpowers/specs/2026-06-26-offsec-hunter-design.md).
+[`docs/superpowers/specs/2026-06-26-offsec-hunter-design.md`](docs/superpowers/specs/2026-06-26-offsec-hunter-design.md);
+the autonomous round loop is designed in
+[`docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md`](docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md).
 
 ## Run-time artifacts
 
@@ -98,5 +110,6 @@ When the skill runs against a target, it writes working artifacts under the **ou
 root** — by default `<target>/.offsec-hunter/` (add `.offsec-hunter/` to the target's
 `.gitignore`), or a central `~/.offsec-hunter/<target-id>/` when the target tree is
 read-only. Per-hunt artifacts are namespaced `hunts/<VULN>/` so different vuln classes
-never clobber each other. See
+never clobber each other: `target.md`, `hypotheses.jsonl`, `survivors.jsonl`,
+`findings.{md,json}`, `pocs/finding-NNN.md`, and a regenerated `run.md` dashboard. See
 [`skills/offsec-hunter/references/artifacts.md`](skills/offsec-hunter/references/artifacts.md).
