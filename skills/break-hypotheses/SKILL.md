@@ -39,20 +39,27 @@ Because a break subagent sees only its prompt, **inject its context** — pass `
 (`id`, `sink`, `suspected_source`, `path`, `mechanism`).
 
 Drop anything that fails any check. Each subagent returns its verdict **untagged** — no
-`id`: it keys the survivor by `hypothesis` and `sink`, carrying the candidate fields, an
-ordered `chain` (hypothesis ids), `severity` + `confidence`, and the guards examined and
-why they hold/fail. Subagents never assign `id` — the **orchestrator is the sole id
-authority**: it writes the survivor line to `hunts/<VULN>/survivors.jsonl`, assigning the
-globally-unique `id` (`s-N`) and stamping the current `"round": N`:
+`id`, no built `chain`: it keys the survivor by `hypothesis` and `sink`, carrying the
+guards examined and why they hold/fail, `severity` + `confidence`, and a **chainability
+flag** (which other candidate(s), if any, it looks chainable with, and why) — a subagent
+sees only its own candidate, never the round's full set, so it cannot build an ordered
+chain. Subagents never assign `id` or `chain` — the **orchestrator is the sole id
+authority**: at synthesis it assembles the ordered `chain` (hypothesis ids) from the
+round's full candidate set, then writes the survivor line to
+`hunts/<VULN>/survivors.jsonl`, assigning the globally-unique `id` (`s-N`) and stamping the
+current `"round": N`:
 
 ```json
 {"id":"s-2","hypothesis":"h-4","sink":"sink-3","chain":["h-7","h-4"],"round":2,"severity":"high","confidence":"medium","guards":"nonce check bypassed via ..."}
 ```
 
-**Dedup on write**: before appending, the orchestrator checks the survivor key
-(`hypothesis` + `sink` + `chain`) against existing lines in `survivors.jsonl`. If a survivor
-with the same key already exists (e.g. re-confirmed after a redirect, or reached via more
-than one route in the same round), skip the append — de-duplicate rather than write a
-second line for the same underlying bug.
+**Dedup at orchestrator write**: the orchestrator writes survivors during synthesis, after
+the `chain` is assembled from the round's full candidate set — so all three key parts
+(`hypothesis`, `sink`, `chain`) are known at write time. Before appending, it checks the
+survivor key (`hypothesis` + `sink` + `chain`) against existing lines in `survivors.jsonl`.
+If a survivor with the same key already exists (e.g. re-confirmed after a redirect, or
+reached via more than one route in the same round), skip the append — de-duplicate rather
+than write a second line for the same underlying bug. Dedup never happens inside the
+isolated break subagent; it can't see other candidates or the assembled chain.
 
 Record the step done in `state.json`.
