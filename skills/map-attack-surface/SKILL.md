@@ -1,9 +1,11 @@
 ---
 name: map-attack-surface
-description: Step 1 of offsec-hunter. Build or refresh a reusable attack-surface map of a target — entry points, trust boundaries, high-risk sinks, and input flows — stamped with the git commit. Reuses a fresh map automatically.
+description: Step 1 of offsec-hunter. Build or refresh a reusable attack-surface map of a target — entry points, trust boundaries, high-risk sinks, and input flows — stamped with the git commit. Reuses a fresh map automatically. Use when starting an offsec-hunter run or refreshing a target's attack-surface map.
 ---
 
 # map-attack-surface — step 1
+
+**Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
 
 Goal: a structured model of how external input enters and flows — **not** an exhaustive
 code read. This map is also the reachability index that prunes the rest of the hunt.

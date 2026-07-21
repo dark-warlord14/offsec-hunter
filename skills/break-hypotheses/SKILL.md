@@ -1,9 +1,11 @@
 ---
 name: break-hypotheses
-description: Step 4 of offsec-hunter. Deep adversarial validation — dispatch stronger-model subagents that try to break each hypothesis, not confirm it. Keeps only candidates that survive every guard and are reachable per the confirmed threat model.
+description: Step 4 of offsec-hunter. Deep adversarial validation — dispatch stronger-model subagents that try to break each hypothesis, not confirm it. Keeps only candidates that survive every guard and are reachable per the confirmed threat model. Use when validating and filtering vulnerability hypotheses through adversarial testing.
 ---
 
 # break-hypotheses — step 4
+
+**Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
 
 Adversarially validate each candidate. The job is to **try to break the claim**, not to
 confirm it. Writes `hunts/<VULN>/survivors.jsonl`.

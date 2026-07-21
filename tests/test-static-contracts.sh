@@ -170,4 +170,10 @@ assert_file_contains "skills/offsec-hunter/references/platform-tools.md" 'AGENTS
 assert_file_not_contains "$O" '\$ARGUMENTS' "orchestrator body has no \$ARGUMENTS token"
 assert_file_not_contains "$S" '\$ARGUMENTS' "scope body has no \$ARGUMENTS token"
 
+# --- v2: descriptions + standalone guard (Task 17) ---
+for V in "$M" "$S" "$R" "$B" "$P"; do
+  assert_file_contains "$V" '[Uu]se when' "step description has a when-to-use clause: $V"
+  assert_file_contains "$V" 'orchestrator first|run .offsec-hunter. first|run the offsec-hunter' "step has standalone-trigger guard: $V"
+done
+
 summary

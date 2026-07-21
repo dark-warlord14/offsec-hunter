@@ -1,9 +1,11 @@
 ---
 name: scope-target
-description: Step 2 of offsec-hunter. Read the attack-surface map and define the hunting goal — the target vuln class plus a confirmed threat model (attacker position, delivery vector, win condition, scope). Interactive runs confirm with the user; headless runs accept and log the proposal.
+description: Step 2 of offsec-hunter. Read the attack-surface map and define the hunting goal — the target vuln class plus a confirmed threat model (attacker position, delivery vector, win condition, scope). Interactive runs confirm with the user; headless runs accept and log the proposal. Use when selecting a vulnerability class and threat model for a target run.
 ---
 
 # scope-target — step 2
+
+**Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
 
 Define the **hunting goal** for this run: the target vuln class plus a confirmed threat
 model. Writes `hunts/<VULN>/target.md` under the output root.
