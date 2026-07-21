@@ -30,7 +30,7 @@ authority**: it takes each returned candidate and writes the line to
 and stamping the current `"round": N`:
 
 ```json
-{"id": "h-1", "family": "f-ssrf-fetch", "sink": "sink-3", "round": 2, "suspected_source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
+{"id": "h-1", "family": "f-ssrf-fetch", "sink": "sink-3", "round": 2, "mechanism": "http.get sink without URL allowlist guard", "suspected_source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
 ```
 
 This step is **round-aware**: on each round the orchestrator tells you which families to

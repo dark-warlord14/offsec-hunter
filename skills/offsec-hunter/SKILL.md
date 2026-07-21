@@ -88,7 +88,9 @@ Each round:
    never full subagent transcripts):
    - Count new survivors and new families.
    - Mark any family that produced nothing new as **blocked** (reopen only on a
-     materially-new mechanism).
+     materially-new mechanism — one introducing a **distinct sink** or a **distinct
+     guard-bypass mechanism**). A hypothesis names a guard/step absent from the family's
+     recorded mechanisms; synthesis compares the `mechanism` field machine-to-machine.
    - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
      no family covers yet; keep at least one agent on each still-productive incompatible
      route so routes stay alive across rounds.

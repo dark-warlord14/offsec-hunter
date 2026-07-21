@@ -88,8 +88,8 @@ the sole id authority**: raise/break subagents return untagged candidates keyed 
 assigns the globally-unique `id` (`h-N` / `s-N`) and `family` only when it writes the line.
 
 - `surface-map.json` sink: `"id": "sink-3"`.
-- `hypotheses.jsonl` line: adds `"family"`, `"sink"`, and `"round"` (the round it was
-  raised in).
+- `hypotheses.jsonl` line: adds `"family"`, `"sink"`, `"round"` (the round it was raised
+  in), and `"mechanism"` (sink + guard-bypass).
 - `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered hypothesis
   ids for multi-step chains), `"severity"`, `"confidence"`, and `"round"` (the round it was
   broken in).
