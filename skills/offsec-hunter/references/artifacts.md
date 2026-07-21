@@ -63,8 +63,10 @@ orchestrator and recorded in `state.json`:
   (e.g. "no `surface-map.json` — run `map-attack-surface` first").
 - `surface-map.json` is **fresh** iff its `commit == git rev-parse HEAD`; otherwise rebuild.
 - Each downstream artifact records the hash of its inputs (`input_hash` in `state.json`).
-  If an input changed since the artifact was written, the artifact is **stale** — re-run
-  that step. This is what makes steering re-run exactly the affected steps.
+  The `input_hash` staleness gate **governs steering only** (user-driven redirects that
+  re-run only the affected steps). Inside the loop, `raise-hypotheses` and
+  `break-hypotheses` re-run every round regardless of whether `target.md` changed; this
+  keeps the round hypothesis-space diverse and fresh.
 
 ## Round state & family registry
 

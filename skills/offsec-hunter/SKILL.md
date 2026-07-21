@@ -72,6 +72,10 @@ is exactly the old single-pass flow.
 **Initialization:** Before the first `raise-hypotheses` run, the orchestrator initializes
 `round=1`, `dry_streak=0`, `families=[]`, and `round_log=[]` in `state.json`.
 
+The loop **drives raise/break by round**, independent of staleness. They re-run every
+round regardless of whether `target.md` changed; the staleness gate applies only to
+steering (user-driven redirects).
+
 Each round:
 
 1. **Read `state.json`** for the resume point (`round`, `dry_streak`, `families`). This is

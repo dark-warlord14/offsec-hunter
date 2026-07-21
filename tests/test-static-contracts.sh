@@ -143,4 +143,9 @@ assert_file_contains "$B" '"round"' "survivors carry round tag"
 assert_file_contains "$B" 'dedup|de-duplicat' "survivors are de-duplicated"
 assert_file_contains "$A" '"round"' "artifacts document round tag on lines"
 
+# --- v2: staleness vs rounds (Task 11) ---
+assert_file_contains "$A" 'steering only|governs steering' "artifacts scopes staleness to steering"
+assert_file_contains "$O" 'every round|drives.*by round' "orchestrator re-runs raise/break each round"
+assert_file_contains "$B" 'current round|round == ' "break processes current round only"
+
 summary
