@@ -130,4 +130,10 @@ assert_file_contains "$P" '"sink"' "step5 traces finding to sink"
 assert_file_contains "$P" '"confidence"' "step5 carries confidence"
 assert_file_contains "$P" 'run\.md' "step5 contributes to run.md dashboard"
 
+# --- v2: canonical state + resume (Task 9) ---
+assert_file_contains "$A" '"status": "looping"' "artifacts shows looping status"
+assert_file_contains "$A" 'last_round' "artifacts shows last_round"
+assert_file_contains "$O" 'initialize' "orchestrator initializes round state"
+assert_file_contains "$O" 'no-op|already recorded' "orchestrator makes re-run idempotent"
+
 summary

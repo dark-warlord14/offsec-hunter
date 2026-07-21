@@ -69,11 +69,16 @@ Steps 1 (map) and 2 (scope) run once. Steps 3 (raise) and 4 (break) are the body
 **round loop**. Step 5 (prove) runs once at loop exit. With a single productive round this
 is exactly the old single-pass flow.
 
+**Initialization:** Before the first `raise-hypotheses` run, the orchestrator initializes
+`round=1`, `dry_streak=0`, `families=[]`, and `round_log=[]` in `state.json`.
+
 Each round:
 
 1. **Read `state.json`** for the resume point (`round`, `dry_streak`, `families`). This is
    what makes the loop **resumable** — a fresh or compacted orchestrator continues instead
-   of restarting.
+   of restarting. Each step tracks its completion in `state.json` with a `status` field
+   and `last_round`; re-running a step for a round it already recorded is a **no-op**
+   (already recorded in `last_round`), so crashes and resume never double-append.
 2. Run `raise-hypotheses` then `break-hypotheses` for this round.
 3. **Synthesize** (orchestrator, reading only compact summaries + this round's jsonl —
    never full subagent transcripts):

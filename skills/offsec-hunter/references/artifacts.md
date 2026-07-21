@@ -26,23 +26,33 @@ orchestrator and recorded in `state.json`:
         finding-001.md
 ```
 
-## state.json
+## state.json (canonical example)
 
 ```json
 {
   "target_root": "/abs/path/to/target",
   "output_root": "/abs/path/to/target/.offsec-hunter",
   "mode": "interactive",
-  "vuln": "SSRF",
+  "vuln": "RCE",
+  "round": 2,
+  "dry_streak": 1,
+  "families": [
+    {"id": "f-deser", "label": "PHP object deserialization", "status": "open",
+     "agents": 2, "hypotheses": ["h-1", "h-4"], "last_new_round": 2, "notes": "gadget chain via wp_options autoload"}
+  ],
   "steps": {
     "map-attack-surface": {"status": "done", "artifact": "surface-map.json", "commit": "<HEAD>", "at": "<iso8601>"},
-    "scope-target":       {"status": "done", "artifact": "hunts/SSRF/target.md", "input_hash": "<sha256 of surface-map.json>", "at": "<iso8601>"},
-    "raise-hypotheses":   {"status": "pending"},
-    "break-hypotheses":   {"status": "pending"},
+    "scope-target":       {"status": "done", "artifact": "hunts/RCE/target.md", "input_hash": "<sha256>", "at": "<iso8601>"},
+    "raise-hypotheses":   {"status": "looping", "last_round": 2},
+    "break-hypotheses":   {"status": "looping", "last_round": 2},
     "prove-exploit":      {"status": "pending"}
   },
+  "round_log": [
+    {"round": 1, "raised": 12, "survived": 2, "new_families": 5, "redirects": ["blocked f-cache", "boost f-deser"]},
+    {"round": 2, "raised": 9, "survived": 0, "new_families": 0, "redirects": ["blocked f-deser"]}
+  ],
   "steer_log": [
-    {"at": "<iso8601>", "feedback": "focus on auth-bypass", "edited": "hunts/SSRF/target.md", "reran_from": "raise-hypotheses"}
+    {"at": "<iso8601>", "feedback": "focus on auth-bypass", "edited": "hunts/RCE/target.md", "reran_from": "raise-hypotheses"}
   ]
 }
 ```
@@ -60,22 +70,8 @@ orchestrator and recorded in `state.json`:
 
 The hunt runs in rounds; all round state lives in `state.json` so a fresh or compacted
 orchestrator resumes mid-hunt (a **resumable** loop). Each round starts by reading
-`state.json`.
-
-```json
-{
-  "round": 2,
-  "dry_streak": 1,
-  "families": [
-    {"id":"f-deser","label":"PHP object deserialization","status":"open",
-     "agents":2,"hypotheses":["h-1","h-4"],"last_new_round":2,"notes":"..."}
-  ],
-  "round_log": [
-    {"round":1,"raised":12,"survived":2,"new_families":5,"redirects":["blocked f-cache"]},
-    {"round":2,"raised":9,"survived":0,"new_families":0,"redirects":["blocked f-deser"]}
-  ]
-}
-```
+`state.json`. See the canonical example above for the complete structure including
+`round`, `dry_streak`, `families`, `round_log`, and step status fields.
 
 - `families[].status` ∈ `open | blocked`. A blocked family reopens only on a
   materially-new mechanism.
