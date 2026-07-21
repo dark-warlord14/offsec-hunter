@@ -103,6 +103,13 @@ skills, conversation, or files already read. Every raise/break delegation prompt
 `sink-N` id + its family, and a one-line threat-model summary. The family registry stays
 orchestrator-only; a subagent receives only its slice in-prompt.
 
+**The orchestrator is the sole id authority.** Under subagent isolation, parallel raise/break
+subagents cannot see each other's ids and would collide if left to invent their own. So
+subagents never assign `h-N` or `family`: they return untagged candidates keyed by `sink`
+(plus `mechanism`/`rationale` or `chain`/`severity`/`confidence`). Only the orchestrator
+assigns globally-unique `h-N` ids and `family` ids at the moment it writes a line to
+`hypotheses.jsonl` or `survivors.jsonl`.
+
 ### run.md dashboard
 
 At loop exit the orchestrator writes `run.md`: rounds executed, the family registry

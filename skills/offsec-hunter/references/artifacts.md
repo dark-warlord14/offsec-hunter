@@ -80,14 +80,27 @@ orchestrator resumes mid-hunt (a **resumable** loop). Each round starts by readi
 
 ## Stable ids & forward references
 
-Every artifact carries ids so a finding traces back to a mapped sink:
+Every artifact carries ids so a finding traces back to a mapped sink. The **orchestrator is
+the sole id authority**: raise/break subagents return untagged candidates keyed by `sink`
+(with mechanism/rationale, or `hypothesis`/`chain`/`severity`/`confidence`); the orchestrator
+assigns the globally-unique `id` (`h-N` / `s-N`) and `family` only when it writes the line.
 
 - `surface-map.json` sink: `"id": "sink-3"`.
-- `hypotheses.jsonl` line: adds `"family"` and `"sink"`.
+- `hypotheses.jsonl` line: adds `"family"`, `"sink"`, and `"round"` (the round it was
+  raised in).
 - `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered hypothesis
-  ids for multi-step chains), `"severity"`, `"confidence"`.
+  ids for multi-step chains), `"severity"`, `"confidence"`, and `"round"` (the round it was
+  broken in).
 - `findings.json`: adds `"survivor"`, `"hypothesis"`, `"sink"`, `"severity"`,
   `"confidence"` — the full trace `finding → survivor → hypothesis → sink`.
+
+Every `hypotheses.jsonl`/`survivors.jsonl` line carries `"round"`. "This round" means
+`line.round == state.round` — that is how `break-hypotheses` selects only the hypotheses
+just raised, and how synthesis counts only this round's new survivors/families.
+
+**Survivor dedup key**: before appending, `break-hypotheses` dedups on write by
+`hypothesis + sink + chain` — a survivor matching an existing line on that key is not
+re-appended (e.g. re-confirmed after a redirect, or reached via more than one route).
 
 `run.md` is a human-readable dashboard written at loop exit (rounds, family registry,
 per-round lines, findings with trace ids).

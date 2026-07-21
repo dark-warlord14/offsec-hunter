@@ -21,19 +21,22 @@ the **confirmed delivery vector + attacker position** from `target.md` — e.g. 
 handler fetch a user-supplied URL without an allowlist?", or "does the file parser trust a
 length field from the input file?".
 
-Each subagent returns a **candidate**, not a verdict: the sink, the suspected
-attacker-controlled source, and the path between them. Append candidates to
-`hunts/<VULN>/hypotheses.jsonl`, one JSON object per line:
+Each subagent returns a **candidate**, not a verdict, and returns it **untagged**: keyed by
+`sink`, with the suspected attacker-controlled source, the path/mechanism between them, and
+a rationale. Subagents never assign `id` or `family` — under subagent isolation, parallel
+subagents can't see each other's ids and would collide. The **orchestrator is the sole id
+authority**: it takes each returned candidate and writes the line to
+`hunts/<VULN>/hypotheses.jsonl`, assigning the globally-unique `id` (`h-N`) and `family`,
+and stamping the current `"round": N`:
 
 ```json
-{"id": "h-1", "family": "f-ssrf-fetch", "sink": "sink-3", "suspected_source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
+{"id": "h-1", "family": "f-ssrf-fetch", "sink": "sink-3", "round": 2, "suspected_source": "body.url", "path": "POST /fetch -> validate() -> http.get()", "rationale": "no allowlist visible"}
 ```
 
 This step is **round-aware**: on each round the orchestrator tells you which families to
 expand and which mapped sinks are still uncovered. Because a dispatched subagent sees only
 its prompt, **inject its context** — pass `output_root`, `target_root`, the exact artifact
 paths to read (`surface-map.json`, `hunts/<VULN>/target.md`), the assigned `sink-N` id and
-family, and a one-line threat-model summary. Tag every hypothesis line with its `family`
-and `sink`.
+family, and a one-line threat-model summary.
 
 Record the step done in `state.json` with the `input_hash` of `target.md`.

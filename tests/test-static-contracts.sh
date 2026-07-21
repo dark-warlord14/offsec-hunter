@@ -136,4 +136,11 @@ assert_file_contains "$A" 'last_round' "artifacts shows last_round"
 assert_file_contains "$O" 'initialize' "orchestrator initializes round state"
 assert_file_contains "$O" 'no-op|already recorded' "orchestrator makes re-run idempotent"
 
+# --- v2: id authority + round tags + dedup (Task 10) ---
+assert_file_contains "$O" 'sole id authority|assigns.*id|id authority' "orchestrator is id authority"
+assert_file_contains "$R" '"round"' "hypotheses carry round tag"
+assert_file_contains "$B" '"round"' "survivors carry round tag"
+assert_file_contains "$B" 'dedup|de-duplicat' "survivors are de-duplicated"
+assert_file_contains "$A" '"round"' "artifacts document round tag on lines"
+
 summary

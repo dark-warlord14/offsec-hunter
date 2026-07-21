@@ -15,7 +15,10 @@ Read `hunts/<VULN>/hypotheses.jsonl`. If it is missing, stop:
 
 ## Procedure
 
-For each candidate, dispatch a **stronger-model subagent** (see the offsec-hunter platform
+Process only **this round's** hypotheses — lines where `line.round == state.round`; earlier
+rounds' hypotheses were already broken (or already survived) in their own round.
+
+For each current-round candidate, dispatch a **stronger-model subagent** (see the offsec-hunter platform
 guide) to trace it across files and attempt to refute it:
 
 - Is the source **actually** attacker-controlled?
@@ -28,13 +31,21 @@ guide) to trace it across files and attempt to refute it:
   exist — see map-attack-surface) to reach the win condition? A survivor may be a
   multi-step chain (e.g. auth-bypass → RCE).
 
-Drop anything that fails any check. Append confirmed-reachable survivors to
-`hunts/<VULN>/survivors.jsonl`, carrying the candidate fields plus the guards examined and
-why they hold/fail. Each survivor references its `hypothesis` and `sink` ids, an ordered
-`chain` (hypothesis ids), and `severity` + `confidence`:
+Drop anything that fails any check. Each subagent returns its verdict **untagged** — no
+`id`: it keys the survivor by `hypothesis` and `sink`, carrying the candidate fields, an
+ordered `chain` (hypothesis ids), `severity` + `confidence`, and the guards examined and
+why they hold/fail. Subagents never assign `id` — the **orchestrator is the sole id
+authority**: it writes the survivor line to `hunts/<VULN>/survivors.jsonl`, assigning the
+globally-unique `id` (`s-N`) and stamping the current `"round": N`:
 
 ```json
-{"id":"s-2","hypothesis":"h-4","sink":"sink-3","chain":["h-7","h-4"],"severity":"high","confidence":"medium","guards":"nonce check bypassed via ..."}
+{"id":"s-2","hypothesis":"h-4","sink":"sink-3","chain":["h-7","h-4"],"round":2,"severity":"high","confidence":"medium","guards":"nonce check bypassed via ..."}
 ```
+
+**Dedup on write**: before appending, the orchestrator checks the survivor key
+(`hypothesis` + `sink` + `chain`) against existing lines in `survivors.jsonl`. If a survivor
+with the same key already exists (e.g. re-confirmed after a redirect, or reached via more
+than one route in the same round), skip the append — de-duplicate rather than write a
+second line for the same underlying bug.
 
 Record the step done in `state.json`.
