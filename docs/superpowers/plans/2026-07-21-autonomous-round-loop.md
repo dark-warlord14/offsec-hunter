@@ -240,7 +240,8 @@ Append to `tests/test-static-contracts.sh` above `summary`:
 ```bash
 # --- map dependency sinks + ids (Task 3) ---
 assert_file_contains "$M" 'sink-[0-9]|stable id' "step1 assigns stable sink ids"
-assert_file_contains "$M" 'third_party|dependenc' "step1 indexes third_party dependencies"
+assert_file_contains "$M" '[Dd]ependenc' "step1 conditionally indexes vendored dependencies"
+assert_file_contains "$M" '[Ii]f|when|present' "step1 makes dependency indexing conditional"
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -260,9 +261,11 @@ In `skills/map-attack-surface/SKILL.md`, in the `## Procedure` list under **High
 Then add a new bullet to the same numbered list, after **Input flow**:
 
 ```markdown
-   - **Dependency sinks** — index high-risk code in `third_party/` (cloned dependencies)
-     as sinks too, with their own `sink-N` ids. RCE may require chaining a target bug with
-     a dependency bug, so dependency sinks must be reachable candidates.
+   - **Dependency sinks (conditional)** — **if** the target vendors its dependencies
+     (common layouts: `third_party/`, `vendor/`, `node_modules/`, `deps/`, or a
+     lockfile-declared tree), index high-risk code in them as sinks too, with their own
+     `sink-N` ids. RCE may require chaining a target bug with a dependency bug. If no
+     vendored deps are present, skip this — emit no dependency sinks and no error.
 ```
 
 - [ ] **Step 4: Run to verify it passes**
@@ -359,7 +362,7 @@ assert_file_contains "$B" '[Cc]hain' "step4 documents bug-chaining"
 assert_file_contains "$B" '"chain"' "step4 records chain field on survivors"
 assert_file_contains "$B" '"severity"' "step4 carries severity"
 assert_file_contains "$B" '"confidence"' "step4 carries confidence"
-assert_file_contains "$B" 'third_party|dependenc' "step4 chains dependency bugs"
+assert_file_contains "$B" '[Dd]ependenc' "step4 chains dependency bugs when present"
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -372,9 +375,9 @@ Expected: FAIL for the five Task 5 assertions.
 In `skills/break-hypotheses/SKILL.md`, add a bullet to the refute checklist (after the win-condition bullet):
 
 ```markdown
-- Can it **chain** with another candidate or a **dependency bug** (from `third_party/`
-  sinks) to reach the win condition? A survivor may be a multi-step chain
-  (e.g. auth-bypass → RCE).
+- Can it **chain** with another candidate or a **dependency bug** (when dependency sinks
+  exist — see map-attack-surface) to reach the win condition? A survivor may be a
+  multi-step chain (e.g. auth-bypass → RCE).
 ```
 
 Then replace the "Append confirmed-reachable survivors" sentence with one that specifies the traced record, and add the example line:

@@ -94,11 +94,18 @@ The registry groups hypotheses by **research idea**, not by wording, and lives i
 
 ## Dependency chaining
 
-- **map-attack-surface** also indexes `third_party/` dependencies as sinks (dependency
-  sinks get `sink-N` ids like any other), so dep bugs are reachable candidates.
+Dependency auditing is **conditional** — vendored dependencies are not always present.
+Only index them when the target actually ships them.
+
+- **map-attack-surface**: **if** the target vendors dependencies (common layouts:
+  `third_party/`, `vendor/`, `node_modules/`, `deps/`, or a lockfile-declared tree), index
+  high-risk code in them as sinks (dependency sinks get `sink-N` ids like any other), so
+  dep bugs are reachable candidates. If no vendored deps are present, skip this — no dep
+  sinks, no error.
 - **break-hypotheses** gains a chaining check: "can this candidate chain with another
-  candidate or a dependency bug to reach the win condition?" A survivor may therefore be a
-  **multi-step chain** (e.g. auth-bypass → RCE), recorded as an ordered `chain`.
+  candidate or a dependency bug (when dep sinks exist) to reach the win condition?" A
+  survivor may therefore be a **multi-step chain** (e.g. auth-bypass → RCE), recorded as an
+  ordered `chain`.
 
 ## Traceable IDs + references
 
