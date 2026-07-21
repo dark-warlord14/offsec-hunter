@@ -22,7 +22,14 @@ guide). It has no input artifact — it is the first step.
    - **Trust boundaries** — unauth ↔ session ↔ m2m; browser ↔ server; service ↔ service.
    - **High-risk sinks** — outbound fetch (SSRF), deserialization, templating (SSTI),
      command/eval (RCE), query construction (SQLi), authz checks, untrusted parsing.
+     Assign each sink a **stable id** (`sink-1`, `sink-2`, …) so downstream artifacts can
+     reference it.
    - **Input flow** — how external input reaches each sink and how it is mutated en route.
+   - **Dependency sinks (conditional)** — **if** the target vendors its dependencies
+     (common layouts: `third_party/`, `vendor/`, `node_modules/`, `deps/`, or a
+     lockfile-declared tree), index high-risk code in them as sinks too, with their own
+     `sink-N` ids. RCE may require chaining a target bug with a dependency bug. If no
+     vendored deps are present, skip this — emit no dependency sinks and no error.
 4. Write `surface-map.json` per the schema in `references/surface-map.md`, stamped with
    `commit` = current `HEAD`. Record the step as done in `state.json`.
 

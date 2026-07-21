@@ -85,6 +85,11 @@ for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove
   assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
 done
 
+# --- map dependency sinks + ids (Task 3) ---
+assert_file_contains "$M" 'sink-[0-9]|stable id' "step1 assigns stable sink ids"
+assert_file_contains "$M" '[Dd]ependenc' "step1 conditionally indexes vendored dependencies"
+assert_file_contains "$M" '[Ii]f|when|present' "step1 makes dependency indexing conditional"
+
 # --- Orchestrator round loop (Task 2) ---
 assert_file_contains "$O" '[Rr]ound loop' "orchestrator documents the round loop"
 assert_file_contains "$O" '2 (consecutive )?dry rounds' "orchestrator states the dry-round stop rule"
