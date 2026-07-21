@@ -87,10 +87,11 @@ Each round:
 3. **Synthesize** (orchestrator, reading only compact summaries + this round's jsonl —
    never full subagent transcripts):
    - Count new survivors and new families.
-   - Mark any family that produced nothing new as **blocked** (reopen only on a
-     materially-new mechanism — one introducing a **distinct sink** or a **distinct
-     guard-bypass mechanism**). A hypothesis names a guard/step absent from the family's
-     recorded mechanisms; synthesis compares the `mechanism` field machine-to-machine.
+   - Mark any family that produced nothing new as **blocked** (materially-new means a
+     **distinct sink** or a **distinct guard-bypass mechanism**, not a distinct label). A
+     blocked family reopens **only when** a hypothesis names a guard or step absent from
+     that family's recorded mechanisms — synthesis makes this determination by comparing
+     the `mechanism` field machine-to-machine, never by comparing prose or labels.
    - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
      no family covers yet; keep at least one agent on each still-productive incompatible
      route so routes stay alive across rounds.

@@ -76,7 +76,8 @@ orchestrator resumes mid-hunt (a **resumable** loop). Each round starts by readi
 `round`, `dry_streak`, `families`, `round_log`, and step status fields.
 
 - `families[].status` ∈ `open | blocked`. A blocked family reopens only on a
-  materially-new mechanism.
+  materially-new mechanism — a distinct sink or guard-bypass, judged by comparing the
+  `mechanism` field (see the orchestrator round-loop section).
 - A round is **dry** when it yields no new survivor AND no materially-new family. Exit after 2 dry
   rounds in a row; log a loud warning when `round > 6`.
 

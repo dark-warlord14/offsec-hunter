@@ -150,7 +150,7 @@ assert_file_contains "$B" 'current round|round == ' "break processes current rou
 
 # --- v2: materially-new definition (Task 12) ---
 assert_file_contains "$O" 'distinct sink|guard-bypass' "orchestrator defines materially-new operationally"
-assert_file_contains "$R" 'mechanism' "hypotheses carry a mechanism field"
-assert_file_contains "$A" 'mechanism' "artifacts document the mechanism field"
+assert_file_contains "$R" '"mechanism"' "hypotheses carry a mechanism field"
+assert_file_contains "$A" '"mechanism"' "artifacts document the mechanism field"
 
 summary
