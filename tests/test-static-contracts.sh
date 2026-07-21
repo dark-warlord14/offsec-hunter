@@ -85,6 +85,17 @@ for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove
   assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
 done
 
+# --- Orchestrator round loop (Task 2) ---
+assert_file_contains "$O" '[Rr]ound loop' "orchestrator documents the round loop"
+assert_file_contains "$O" '2 (consecutive )?dry rounds' "orchestrator states the dry-round stop rule"
+assert_file_contains "$O" 'round > 6|round &gt; 6' "orchestrator has soft backstop"
+assert_file_contains "$O" '[Ff]amily registry' "orchestrator manages the family registry"
+assert_file_contains "$O" '[Bb]locked' "orchestrator documents blocked families"
+assert_file_contains "$O" '[Rr]edirect' "orchestrator documents redirect"
+assert_file_contains "$O" '[Rr]esumable|reads state\.json' "orchestrator documents resumable loop"
+assert_file_contains "$O" '[Cc]ontext-injection|inject' "orchestrator documents context-injection contract"
+assert_file_contains "$O" 'run\.md' "orchestrator writes run.md dashboard"
+
 # --- Round-loop artifacts (Task 1) ---
 A="skills/offsec-hunter/references/artifacts.md"
 assert_file_contains "$A" '"round"' "artifacts documents round field"

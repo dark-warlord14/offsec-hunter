@@ -63,6 +63,45 @@ Declare the run mode and record it in `state.json`:
 Print a compact progress line read from `state.json` (e.g. `✅ 1–2  ▶ 3`) so a returning
 human or a resuming agent knows the next action.
 
+## Round loop (steps 3–4)
+
+Steps 1 (map) and 2 (scope) run once. Steps 3 (raise) and 4 (break) are the body of a
+**round loop**. Step 5 (prove) runs once at loop exit. With a single productive round this
+is exactly the old single-pass flow.
+
+Each round:
+
+1. **Read `state.json`** for the resume point (`round`, `dry_streak`, `families`). This is
+   what makes the loop **resumable** — a fresh or compacted orchestrator continues instead
+   of restarting.
+2. Run `raise-hypotheses` then `break-hypotheses` for this round.
+3. **Synthesize** (orchestrator, reading only compact summaries + this round's jsonl —
+   never full subagent transcripts):
+   - Count new survivors and new families.
+   - Mark any family that produced nothing new as **blocked** (reopen only on a
+     materially-new mechanism).
+   - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
+     no family covers yet; keep at least one agent on each still-productive incompatible
+     route so routes stay alive across rounds.
+   - Append a one-line entry to `state.json.round_log` and to `run.md`.
+4. **Stop rule**: exit after **2 consecutive dry rounds** (a dry round = no new survivor
+   AND no new family). Soft backstop: log a loud warning when `round > 6` (the dry-round
+   rule still governs; the warning is auditability, not a hard cap).
+
+### Context-injection contract (critical)
+
+A subagent sees only its delegation prompt plus CLAUDE.md — not the orchestrator's invoked
+skills, conversation, or files already read. Every raise/break delegation prompt MUST
+**inject**: `output_root` and `target_root`, the exact artifact paths to read, the assigned
+`sink-N` id + its family, and a one-line threat-model summary. The family registry stays
+orchestrator-only; a subagent receives only its slice in-prompt.
+
+### run.md dashboard
+
+At loop exit the orchestrator writes `run.md`: rounds executed, the family registry
+(open/blocked + counts), the per-round lines, and the final findings with their trace ids.
+Steered re-runs append (matching `prove-exploit`'s additive merge).
+
 ## Vuln class
 
 Hunt for: **$ARGUMENTS**
