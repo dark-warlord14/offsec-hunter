@@ -88,7 +88,7 @@ done
 # --- map dependency sinks + ids (Task 3) ---
 assert_file_contains "$M" 'sink-[0-9]|stable id' "step1 assigns stable sink ids"
 assert_file_contains "$M" '[Dd]ependenc' "step1 conditionally indexes vendored dependencies"
-assert_file_contains "$M" '[Ii]f|when|present' "step1 makes dependency indexing conditional"
+assert_file_contains "$M" 'skip this|no.*dependency sinks' "step1 dependency indexing is conditional"
 
 # --- Orchestrator round loop (Task 2) ---
 assert_file_contains "$O" '[Rr]ound loop' "orchestrator documents the round loop"
@@ -175,5 +175,13 @@ for V in "$M" "$S" "$R" "$B" "$P"; do
   assert_file_contains "$V" '[Uu]se when' "step description has a when-to-use clause: $V"
   assert_file_contains "$V" 'orchestrator first|run .offsec-hunter. first|run the offsec-hunter' "step has standalone-trigger guard: $V"
 done
+
+# --- v2: schema fields (Task 18) ---
+assert_file_contains "$A" 'guards' "artifacts documents guards field on survivors"
+assert_file_contains "$A" 'origin' "artifacts documents origin field on sinks"
+assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'origin' "surface-map schema includes origin field"
+
+# --- v2: rounds=1 regression (Task 18) ---
+assert_file_contains "$O" 'single(-| )?pass|single productive round' "orchestrator preserves single-pass at rounds=1"
 
 summary

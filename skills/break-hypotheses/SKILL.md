@@ -30,7 +30,7 @@ guide) to trace it across files and attempt to refute it:
 - Does the result meet the **confirmed win condition** (so a DoS or memory-safety crash
   counts when the user scoped it in)?
 - Is it **chainable** — does it look like it could chain with another candidate or a
-  **dependency bug** (when dependency sinks exist — see map-attack-surface) to reach the
+  **dependency bug** (when dependency sinks exist — sinks with `origin: dependency`, see map-attack-surface) to reach the
   win condition? A survivor may be part of a multi-step chain (e.g. auth-bypass → RCE).
   **Flag** chainability; the orchestrator assembles the actual chain from the round's
   candidates.

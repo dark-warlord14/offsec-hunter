@@ -88,11 +88,11 @@ the sole id authority**: raise/break subagents return untagged candidates keyed 
 (with mechanism/rationale, or `hypothesis`/`chain`/`severity`/`confidence`); the orchestrator
 assigns the globally-unique `id` (`h-N` / `s-N`) and `family` only when it writes the line.
 
-- `surface-map.json` sink: `"id": "sink-3"`.
+- `surface-map.json` sink: `"id": "sink-3"`, `"origin": "target | dependency"` (marking vendored vs target sinks).
 - `hypotheses.jsonl` line: adds `"family"`, `"sink"`, `"round"` (the round it was raised
   in), and `"mechanism"` (sink + guard-bypass).
 - `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered hypothesis
-  ids for multi-step chains), `"severity"`, `"confidence"`, and `"round"` (the round it was
+  ids for multi-step chains), `"severity"`, `"confidence"`, `"guards"` (narrative of examined guards), and `"round"` (the round it was
   broken in).
 - `findings.json`: adds `"survivor"`, `"hypothesis"`, `"sink"`, `"severity"`,
   `"confidence"` — the full trace `finding → survivor → hypothesis → sink`.
