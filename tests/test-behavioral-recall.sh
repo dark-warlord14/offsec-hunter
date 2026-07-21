@@ -26,4 +26,9 @@ out2="$(run_claude 'In offsec-hunter, what is the difference between interactive
 check "$out2" 'headless' "explains headless mode"
 check "$out2" 'confirm|ask|interactive' "explains interactive mode"
 
+out3="$(run_claude 'In offsec-hunter, when does the hunt stop launching new rounds, and what is a family registry? Be brief.')"
+check "$out3" 'dry|two rounds|2 rounds' "explains the dry-round stop rule"
+check "$out3" 'famil' "explains the family registry"
+check "$out3" 'block|redirect' "explains blocked/redirect behaviour"
+
 [ "$fail" -eq 0 ] && echo "  ---- behavioral PASS ----" || { echo "  ---- behavioral FAIL ----"; exit 1; }
