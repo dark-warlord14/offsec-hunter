@@ -25,6 +25,11 @@ or stale, so the workflow runs in order every time:
 5. **prove-exploit** — confirmed findings + a working PoC, as `findings.md` (human) and
    `findings.json` (machine), with an empty-results report when nothing is exploitable.
 
+Steps 3–4 run as an **autonomous round loop**: the orchestrator raises hypotheses, breaks
+them, then synthesizes and redirects — grouping ideas into a family registry, blocking
+stalled routes, and launching new rounds until two rounds in a row are dry. All round
+state lives in `state.json`, so the loop is resumable.
+
 Run a completed hunt again to **steer** it: edit the artifact at the right level
 (`surface-map.json`, `target.md`, `hypotheses.jsonl`, …) and only the stale steps re-run;
 results merge additively. The skill bodies are platform-neutral; per-platform tool mapping
