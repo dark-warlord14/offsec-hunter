@@ -23,7 +23,7 @@ orchestrator and recorded in `state.json`:
       findings.md
       findings.json
       pocs/
-        finding-001.sh
+        finding-001.md
 ```
 
 ## state.json

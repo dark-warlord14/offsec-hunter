@@ -77,7 +77,7 @@ assert_file_contains "$P" 'findings\.json' "step5 emits machine-readable finding
 assert_file_contains "$P" 'findings\.md' "step5 emits human-readable findings"
 assert_file_contains "$P" 'no exploitable findings' "step5 has empty-results report"
 assert_file_contains "$P" 'entry-point \+ sink' "step5 documents additive-merge dedup key"
-assert_file_contains "$P" 'pocs/' "step5 writes runnable PoCs"
+assert_file_contains "$P" 'pocs/finding-NNN\.md' "step5 writes minimal markdown PoCs"
 
 # --- shared-refs do not leak into step skills (all dirs now exist) ---
 for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove-exploit; do
