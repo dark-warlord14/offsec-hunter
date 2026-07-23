@@ -77,12 +77,111 @@ assert_file_contains "$P" 'findings\.json' "step5 emits machine-readable finding
 assert_file_contains "$P" 'findings\.md' "step5 emits human-readable findings"
 assert_file_contains "$P" 'no exploitable findings' "step5 has empty-results report"
 assert_file_contains "$P" 'entry-point \+ sink' "step5 documents additive-merge dedup key"
-assert_file_contains "$P" 'pocs/' "step5 writes runnable PoCs"
+assert_file_contains "$P" 'pocs/finding-NNN\.md' "step5 writes minimal markdown PoCs"
 
 # --- shared-refs do not leak into step skills (all dirs now exist) ---
 for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove-exploit; do
   assert_file_absent "skills/$d/references/platform-tools.md" "$d has no platform-tools.md"
   assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
 done
+
+# --- map dependency sinks + ids (Task 3) ---
+assert_file_contains "$M" 'sink-[0-9]|stable id' "step1 assigns stable sink ids"
+assert_file_contains "$M" '[Dd]ependenc' "step1 conditionally indexes vendored dependencies"
+assert_file_contains "$M" 'skip this|no.*dependency sinks' "step1 dependency indexing is conditional"
+
+# --- Orchestrator round loop (Task 2) ---
+assert_file_contains "$O" '[Rr]ound loop' "orchestrator documents the round loop"
+assert_file_contains "$O" '2 (consecutive )?dry rounds' "orchestrator states the dry-round stop rule"
+assert_file_contains "$O" 'round > 6|round &gt; 6' "orchestrator has soft backstop"
+assert_file_contains "$O" '[Ff]amily registry' "orchestrator manages the family registry"
+assert_file_contains "$O" '[Bb]locked' "orchestrator documents blocked families"
+assert_file_contains "$O" '[Rr]edirect' "orchestrator documents redirect"
+assert_file_contains "$O" '[Rr]esumable|reads state\.json' "orchestrator documents resumable loop"
+assert_file_contains "$O" '[Cc]ontext-injection|inject' "orchestrator documents context-injection contract"
+assert_file_contains "$O" 'run\.md' "orchestrator writes run.md dashboard"
+
+# --- Round-loop artifacts (Task 1) ---
+A="skills/offsec-hunter/references/artifacts.md"
+assert_file_contains "$A" '"round"' "artifacts documents round field"
+assert_file_contains "$A" '"dry_streak"' "artifacts documents dry_streak field"
+assert_file_contains "$A" '"families"' "artifacts documents family registry"
+assert_file_contains "$A" '"round_log"' "artifacts documents round_log"
+assert_file_contains "$A" 'sink-[0-9]' "artifacts documents stable sink ids"
+assert_file_contains "$A" '[Rr]esumable' "artifacts documents resumable loop"
+assert_file_contains "$A" '"chain"' "artifacts documents chain field"
+
+# --- raise round-aware + ids (Task 4) ---
+assert_file_contains "$R" '"family"' "step3 tags hypotheses with a family"
+assert_file_contains "$R" '"sink"' "step3 references the sink id"
+assert_file_contains "$R" '[Rr]ound' "step3 is round-aware"
+assert_file_contains "$R" 'output_root|inject' "step3 injects context into subagents"
+
+# --- break chaining + trace (Task 5) ---
+assert_file_contains "$B" '[Cc]hain' "step4 documents bug-chaining"
+assert_file_contains "$B" '"chain"' "step4 records chain field on survivors"
+assert_file_contains "$B" '"severity"' "step4 carries severity"
+assert_file_contains "$B" '"confidence"' "step4 carries confidence"
+assert_file_contains "$B" '[Dd]ependenc' "step4 chains dependency bugs when present"
+
+# --- prove trace + dashboard (Task 6) ---
+assert_file_contains "$P" '"survivor"' "step5 traces finding to survivor"
+assert_file_contains "$P" '"sink"' "step5 traces finding to sink"
+assert_file_contains "$P" '"confidence"' "step5 carries confidence"
+assert_file_contains "$P" 'run\.md' "step5 contributes to run.md dashboard"
+
+# --- v2: canonical state + resume (Task 9) ---
+assert_file_contains "$A" '"status": "looping"' "artifacts shows looping status"
+assert_file_contains "$A" 'last_round' "artifacts shows last_round"
+assert_file_contains "$O" 'initialize' "orchestrator initializes round state"
+assert_file_contains "$O" 'no-op|already recorded' "orchestrator makes re-run idempotent"
+
+# --- v2: id authority + round tags + dedup (Task 10) ---
+assert_file_contains "$O" 'sole id authority|assigns.*id|id authority' "orchestrator is id authority"
+assert_file_contains "$R" '"round"' "hypotheses carry round tag"
+assert_file_contains "$B" '"round"' "survivors carry round tag"
+assert_file_contains "$B" 'dedup|de-duplicat' "survivors are de-duplicated"
+assert_file_contains "$A" '"round"' "artifacts document round tag on lines"
+
+# --- v2: staleness vs rounds (Task 11) ---
+assert_file_contains "$A" 'steering only|governs steering' "artifacts scopes staleness to steering"
+assert_file_contains "$O" 'every round|drives.*by round' "orchestrator re-runs raise/break each round"
+assert_file_contains "$B" 'current round|round == ' "break processes current round only"
+
+# --- v2: materially-new definition (Task 12) ---
+assert_file_contains "$O" 'distinct sink|guard-bypass' "orchestrator defines materially-new operationally"
+assert_file_contains "$R" '"mechanism"' "hypotheses carry a mechanism field"
+assert_file_contains "$A" '"mechanism"' "artifacts document the mechanism field"
+
+# --- v2: break context injection (Task 13) ---
+assert_file_contains "$B" 'output_root|inject' "break injects context into subagents"
+assert_file_contains "$B" 'candidate.*fields|full fields' "break injects the candidate's fields"
+
+# --- v2: chaining at synthesis (Task 14) ---
+assert_file_contains "$O" 'chain' "orchestrator assembles chains at synthesis"
+assert_file_contains "$B" 'chainable|flag' "break only flags chainability"
+
+# --- v2: run.md single owner (Task 15) ---
+assert_file_contains "$O" 'regenerate' "orchestrator regenerates run.md"
+assert_file_contains "$P" 'not.*run\.md|orchestrator.*run\.md' "prove defers run.md to orchestrator"
+
+# --- v2: codex portability (Task 16) ---
+assert_file_contains "skills/offsec-hunter/references/platform-tools.md" 'AGENTS\.md' "platform-tools maps always-on context"
+assert_file_not_contains "$O" '\$ARGUMENTS' "orchestrator body has no \$ARGUMENTS token"
+assert_file_not_contains "$S" '\$ARGUMENTS' "scope body has no \$ARGUMENTS token"
+
+# --- v2: descriptions + standalone guard (Task 17) ---
+for V in "$M" "$S" "$R" "$B" "$P"; do
+  assert_file_contains "$V" '[Uu]se when' "step description has a when-to-use clause: $V"
+  assert_file_contains "$V" 'orchestrator first|run .offsec-hunter. first|run the offsec-hunter' "step has standalone-trigger guard: $V"
+done
+
+# --- v2: schema fields (Task 18) ---
+assert_file_contains "$A" 'guards' "artifacts documents guards field on survivors"
+assert_file_contains "$A" 'origin' "artifacts documents origin field on sinks"
+assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'origin' "surface-map schema includes origin field"
+
+# --- v2: rounds=1 regression (Task 18) ---
+assert_file_contains "$O" 'single(-| )?pass|single productive round' "orchestrator preserves single-pass at rounds=1"
 
 summary
