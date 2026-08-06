@@ -102,7 +102,9 @@ or crashed orchestrator resumes rather than restarts.
 Design rationale is in `docs/superpowers/specs/` (`2026-06-26-offsec-hunter-design.md` for
 the overall design, `2026-07-21-autonomous-round-loop-design.md` for the loop,
 `2026-08-06-comprehension-first-recon-design.md` for the comprehension/security split and
-the prior-art survey behind it), with task-level plans in `docs/superpowers/plans/`.
+the prior-art survey behind it, `2026-08-06-single-skill-consolidation-design.md` for the
+single-skill consolidation and the platform research behind it), with task-level plans in
+`docs/superpowers/plans/`.
 Dated specs and plans are historical records of what was decided when — do not rewrite them
 to match later changes.
 

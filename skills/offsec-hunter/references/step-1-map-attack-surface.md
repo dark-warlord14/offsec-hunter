@@ -55,17 +55,6 @@ Prioritize what is **reachable from crafted input** over reading everything.
 The map is the persisted, reusable recon artifact. It is written to
 `.offsec-hunter/surface-map.json` at the target repo root and is **gitignored**.
 
-## Freshness rule
-
-The map records the git commit it was built from. On each run:
-
-- If `surface-map.json` exists and `commit == git rev-parse HEAD` → **fresh**: load and
-  reuse, skip rebuilding.
-- Otherwise → **stale or missing**: rebuild. Never trust a stale map.
-
-This makes reuse automatic and self-maintaining: the map regenerates only when the code
-actually changed.
-
 ## Schema
 
 ```json

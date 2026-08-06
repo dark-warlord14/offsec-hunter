@@ -19,11 +19,11 @@ reference file, each gated on the previous one's file artifact:
    — confirm the vuln class and threat model; interactive asks, headless logs.
 3. **Locate sinks** → `references/step-3-locate-sinks.md` → `hunts/<VULN>/sinks.json`
    — **security judgment begins here**; sole assigner of `sink-N` ids.
-4. **Raise hypotheses** → `references/step-4-raise-hypotheses.md` → `hypotheses.jsonl`
+4. **Raise hypotheses** → `references/step-4-raise-hypotheses.md` → `hunts/<VULN>/hypotheses.jsonl`
    — cheap wide fan-out, optimise recall not precision.
-5. **Break hypotheses** → `references/step-5-break-hypotheses.md` → `survivors.jsonl`
+5. **Break hypotheses** → `references/step-5-break-hypotheses.md` → `hunts/<VULN>/survivors.jsonl`
    — adversarial: try to refute each claim, not confirm it.
-6. **Prove exploit** → `references/step-6-prove-exploit.md` → `findings.{md,json}` + `pocs/`
+6. **Prove exploit** → `references/step-6-prove-exploit.md` → `hunts/<VULN>/findings.{md,json}` + `pocs/`
    — no PoC, no finding.
 
 User-facing mental model: **understand → goal → hunt → exploit**.
@@ -44,12 +44,15 @@ Reliability comes from **artifact-gating**, not trust:
 
 1. **Before step 1**, resolve the two roots and the run mode, then write `state.json`.
    Every later step reads them from there. Do this before any other action.
-2. **Before executing step N, read its reference file** (`references/step-N-<name>.md`)
+2. **Before step 1, also read `references/artifacts.md` and `references/platform-tools.md`.**
+   The first defines `state.json`, the artifact tree, and the gating rules; the second maps
+   this skill's actions onto your platform's real capabilities. Neither is optional.
+3. **Before executing step N, read its reference file** (`references/step-N-<name>.md`)
    and follow it. Do not execute a step from the one-line summary above — the summary
    names the step and its single hardest constraint; the reference file carries the
    procedure, the gate, and the schema.
-3. Create one task/todo per step and complete them in order.
-4. Each step writes a file artifact; the next step begins by reading it. Never start a
+4. Create one task/todo per step and complete them in order.
+5. Each step writes a file artifact; the next step begins by reading it. Never start a
    step whose input artifact is missing or stale.
 
 ### Roots — resolve once
@@ -96,7 +99,7 @@ Each round:
    of restarting. Each step tracks its completion in `state.json` with a `status` field
    and `last_round`; re-running a step for a round it already recorded is a **no-op**
    (already recorded in `last_round`), so crashes and resume never double-append.
-2. Run `raise-hypotheses` then `break-hypotheses` for this round.
+2. Run step 4 then step 5 for this round.
 3. **Synthesize** (orchestrator, reading only compact summaries + this round's jsonl —
    never full subagent transcripts):
    - Count new survivors and new families.
@@ -195,5 +198,5 @@ artifact at the right level and re-running only the steps that go stale:
 After step 6: interactive → offer "not satisfied? tell me how to redirect"; headless →
 accept a feedback string. Map the feedback to the artifact level above, edit/annotate that
 artifact (so the staleness check fires), append the steer to the `state.json` steer log,
-and re-run from there. Steered re-runs **merge additively** (see `prove-exploit`); they
+and re-run from there. Steered re-runs **merge additively** (see step 6); they
 never overwrite a confirmed finding.
