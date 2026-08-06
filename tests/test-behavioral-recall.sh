@@ -17,9 +17,10 @@ out="$(run_claude 'Describe the offsec-hunter skill: list its steps in order and
 
 check "$out" 'map.?attack.?surface' "names step 1"
 check "$out" 'scope.?target'        "names step 2"
-check "$out" 'raise.?hypotheses'    "names step 3"
-check "$out" 'break.?hypotheses'    "names step 4"
-check "$out" 'prove.?exploit'       "names step 5"
+check "$out" 'locate.?sinks'        "names step 3"
+check "$out" 'raise.?hypotheses'    "names step 4"
+check "$out" 'break.?hypotheses'    "names step 5"
+check "$out" 'prove.?exploit'       "names step 6"
 check "$out" 'artifact|gate|state\.json' "describes artifact-gating"
 
 out2="$(run_claude 'In offsec-hunter, what is the difference between interactive and headless mode? Be brief.')"
