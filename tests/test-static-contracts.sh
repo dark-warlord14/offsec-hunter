@@ -79,8 +79,10 @@ assert_file_contains "$P" 'no exploitable findings' "step5 has empty-results rep
 assert_file_contains "$P" 'entry-point \+ sink' "step5 documents additive-merge dedup key"
 assert_file_contains "$P" 'pocs/finding-NNN\.md' "step5 writes minimal markdown PoCs"
 
+L="skills/locate-sinks/SKILL.md"
+
 # --- shared-refs do not leak into step skills (all dirs now exist) ---
-for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove-exploit; do
+for d in map-attack-surface scope-target locate-sinks raise-hypotheses break-hypotheses prove-exploit; do
   assert_file_absent "skills/$d/references/platform-tools.md" "$d has no platform-tools.md"
   assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
 done
@@ -176,7 +178,7 @@ assert_file_not_contains "$O" '\$ARGUMENTS' "orchestrator body has no \$ARGUMENT
 assert_file_not_contains "$S" '\$ARGUMENTS' "scope body has no \$ARGUMENTS token"
 
 # --- v2: descriptions + standalone guard (Task 17) ---
-for V in "$M" "$S" "$R" "$B" "$P"; do
+for V in "$M" "$S" "$L" "$R" "$B" "$P"; do
   assert_file_contains "$V" '[Uu]se when' "step description has a when-to-use clause: $V"
   assert_file_contains "$V" 'orchestrator first|run .offsec-hunter. first|run the offsec-hunter' "step has standalone-trigger guard: $V"
 done
@@ -188,5 +190,19 @@ assert_file_contains "skills/locate-sinks/references/sinks.md" 'origin' "sinks s
 
 # --- v2: rounds=1 regression (Task 18) ---
 assert_file_contains "$O" 'single(-| )?pass|single productive round' "orchestrator preserves single-pass at rounds=1"
+
+# --- locate-sinks (2026-08-06) ---
+L="skills/locate-sinks/SKILL.md"
+assert_file_contains "$L" '^name: locate-sinks' "step3 frontmatter name"
+assert_file_contains "$L" 'surface-map\.json' "step3 reads surface-map.json"
+assert_file_contains "$L" 'target\.md' "step3 reads target.md"
+assert_file_contains "$L" 'scope-target first' "step3 actionable missing-input error"
+assert_file_contains "$L" 'sinks\.json' "step3 writes sinks.json"
+assert_file_contains "$L" 'sink-[0-9]|stable id' "step3 assigns stable sink ids"
+assert_file_contains "$L" '[Dd]ependenc' "step3 conditionally indexes vendored dependencies"
+assert_file_contains "$L" 'skip this|no.*dependency sinks' "step3 dependency indexing is conditional"
+assert_file_contains "$L" 'sinks\.md' "step3 references its schema"
+assert_file_contains "$L" 'every language|ecosystem' "step3 is language-agnostic"
+assert_file_exists "skills/locate-sinks/references/sinks.md" "sinks schema exists"
 
 summary
