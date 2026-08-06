@@ -1,8 +1,21 @@
 # Single-skill consolidation — design
 
 **Date:** 2026-08-06
-**Status:** approved, not yet implemented
+**Status:** ❌ **SUPERSEDED — implemented, then reverted the same day. Its central premise is false.**
 **Supersedes:** the "minimal fix" (add an invoke-a-skill row to `platform-tools.md`) proposed and rejected during investigation.
+
+> **Why this was wrong.** This spec claims "there is no skill-to-skill invocation on either
+> platform". That is false. The superpowers plugin does it as its core pattern:
+> `**REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development`, and its skills
+> reach sibling directories freely (`../requesting-code-review/code-reviewer.md`). The
+> conclusion was drawn from the absence of a *documented API* while ignoring a working
+> implementation in the same session. The real defect was weak, self-contradicted
+> invocation prose in the orchestrator — "Invoke each step by name" with no requirement
+> marker, immediately undercut by "Never reach into another skill's directory".
+>
+> Retained from this work: the Codex model-tiering and fan-out corrections, per-step binding
+> constraints in the orchestrator step list, and writing `state.json` before step 1. The
+> layout change was reverted. Kept as a record of the wrong turn.
 
 ## Problem
 

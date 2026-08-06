@@ -10,30 +10,31 @@ This is part of an **authorized** security task: identify vulnerabilities that a
 
 **The goal is not code review. The goal is to break the target.**
 
-This skill is the **orchestrator**. It runs six artifact-gated steps, each defined in a
-reference file, each gated on the previous one's file artifact:
+This skill is the **orchestrator**. It runs six composable skills, each gated on the
+previous one's file artifact:
 
-1. **Map attack surface** → `references/step-1-map-attack-surface.md` → `surface-map.json`
+1. **REQUIRED SUB-SKILL:** Use the `map-attack-surface` skill → `surface-map.json`
    — **comprehension only: no vuln classes, no risk verdicts, no guard analysis, no sink hunting.**
-2. **Scope target** → `references/step-2-scope-target.md` → `hunts/<VULN>/target.md`
+2. **REQUIRED SUB-SKILL:** Use the `scope-target` skill → `hunts/<VULN>/target.md`
    — confirm the vuln class and threat model; interactive asks, headless logs.
-3. **Locate sinks** → `references/step-3-locate-sinks.md` → `hunts/<VULN>/sinks.json`
+3. **REQUIRED SUB-SKILL:** Use the `locate-sinks` skill → `hunts/<VULN>/sinks.json`
    — **security judgment begins here**; sole assigner of `sink-N` ids.
-4. **Raise hypotheses** → `references/step-4-raise-hypotheses.md` → `hunts/<VULN>/hypotheses.jsonl`
+4. **REQUIRED SUB-SKILL:** Use the `raise-hypotheses` skill → `hunts/<VULN>/hypotheses.jsonl`
    — cheap wide fan-out, optimise recall not precision.
-5. **Break hypotheses** → `references/step-5-break-hypotheses.md` → `hunts/<VULN>/survivors.jsonl`
+5. **REQUIRED SUB-SKILL:** Use the `break-hypotheses` skill → `hunts/<VULN>/survivors.jsonl`
    — adversarial: try to refute each claim, not confirm it.
-6. **Prove exploit** → `references/step-6-prove-exploit.md` → `hunts/<VULN>/findings.{md,json}` + `pocs/`
+6. **REQUIRED SUB-SKILL:** Use the `prove-exploit` skill → `hunts/<VULN>/findings.{md,json}` + `pocs/`
    — no PoC, no finding.
 
 User-facing mental model: **understand → goal → hunt → exploit**.
 
-Steps 1–2 carry no security verdicts. **Security judgment begins at step 3.**
+Steps 1–2 are comprehension and scoping and carry no security verdicts. **Security
+judgment begins at `locate-sinks`.**
 
 ## How this skill runs
 
-Instruction-driven and platform-neutral. Map every action ("dispatch a subagent",
-"select a model where the platform allows it") to your platform's tools per the
+Instruction-driven and platform-neutral. Map every action ("use a step skill", "dispatch a
+subagent", "select a model where the platform allows it") to your platform's tools per the
 **offsec-hunter platform guide** (`references/platform-tools.md`). Artifact layout, the
 two roots, `state.json`, and the gating/staleness rules are defined in the **offsec-hunter
 artifacts guide** (`references/artifacts.md`).
@@ -44,13 +45,14 @@ Reliability comes from **artifact-gating**, not trust:
 
 1. **Before step 1**, resolve the two roots and the run mode, then write `state.json`.
    Every later step reads them from there. Do this before any other action.
-2. **Before step 1, also read `references/artifacts.md` and `references/platform-tools.md`.**
-   The first defines `state.json`, the artifact tree, and the gating rules; the second maps
-   this skill's actions onto your platform's real capabilities. Neither is optional.
-3. **Before executing step N, read its reference file** (`references/step-N-<name>.md`)
-   and follow it. Do not execute a step from the one-line summary above — the summary
-   names the step and its single hardest constraint; the reference file carries the
-   procedure, the gate, and the schema.
+2. **Before step 1, also read the artifacts guide and the platform guide**
+   (`references/artifacts.md`, `references/platform-tools.md`). The first defines
+   `state.json`, the artifact tree, and the gating rules; the second maps this skill's
+   actions onto your platform's real capabilities. Neither is optional.
+3. **Each step is a separate skill — use it, do not do its work yourself.** The step list
+   above gives each step's name and its single hardest constraint; the skill itself carries
+   the procedure, the gate, and the schema. Never execute a step from the one-line summary.
+   Announce each one as you start it: "Using `<skill>` to <purpose>".
 4. Create one task/todo per step and complete them in order.
 5. Each step writes a file artifact; the next step begins by reading it. Never start a
    step whose input artifact is missing or stale.
@@ -99,7 +101,7 @@ Each round:
    of restarting. Each step tracks its completion in `state.json` with a `status` field
    and `last_round`; re-running a step for a round it already recorded is a **no-op**
    (already recorded in `last_round`), so crashes and resume never double-append.
-2. Run step 4 then step 5 for this round.
+2. Run `raise-hypotheses` then `break-hypotheses` for this round.
 3. **Synthesize** (orchestrator, reading only compact summaries + this round's jsonl —
    never full subagent transcripts):
    - Count new survivors and new families.
@@ -125,8 +127,8 @@ Each round:
 ### Context-injection contract (critical)
 
 A subagent sees only its delegation prompt plus whatever always-on project context the
-platform auto-loads (`CLAUDE.md` on Claude Code, `AGENTS.md` on Codex) — not the orchestrator's
-conversation or reference files, or files already read. Every raise/break delegation prompt MUST
+platform auto-loads (`CLAUDE.md` on Claude Code, `AGENTS.md` on Codex) — not the orchestrator's invoked
+skills, conversation, or files already read. Every raise/break delegation prompt MUST
 **inject**: `output_root` and `target_root`, the exact artifact paths to read, the assigned
 `sink-N` id + its family, and a one-line threat-model summary. The family registry stays
 orchestrator-only; a subagent receives only its slice in-prompt.
@@ -175,11 +177,11 @@ Held regardless of target and **not** softened at the checkpoint:
 ## Budget orchestration
 
 Cap concurrent subagents. Where the platform supports per-task model selection, use a
-cheap/fast model for breadth (step 4) and escalate to a stronger model only on survivors
-(step 5), reserving the strongest model for step 6 synthesis. Where it does not — see the
-platform guide — every step runs on the session model, and control comes from artifact
-gating and the dry-round stop rule rather than from cost tiering. The biggest saving on
-any platform is reusing a fresh map (skipping step 1).
+cheap/fast model for breadth (`raise-hypotheses`) and escalate to a stronger model only on
+survivors (`break-hypotheses`), reserving the strongest model for `prove-exploit`. Where it
+does not — see the platform guide — every step runs on the session model, and control comes
+from artifact gating and the dry-round stop rule rather than from cost tiering. The biggest
+saving on any platform is reusing a fresh map (`map-attack-surface` skip).
 
 ## Steering — redirecting a run
 
@@ -198,5 +200,5 @@ artifact at the right level and re-running only the steps that go stale:
 After step 6: interactive → offer "not satisfied? tell me how to redirect"; headless →
 accept a feedback string. Map the feedback to the artifact level above, edit/annotate that
 artifact (so the staleness check fires), append the steer to the `state.json` steer log,
-and re-run from there. Steered re-runs **merge additively** (see step 6); they
+and re-run from there. Steered re-runs **merge additively** (see `prove-exploit`); they
 never overwrite a confirmed finding.

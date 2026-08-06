@@ -28,24 +28,6 @@ assert_file_not_contains() {
   else echo "  [PASS] $label"; PASS=$((PASS+1)); fi
 }
 
-# Fails if more than one SKILL.md exists — offsec-hunter must be the only skill.
-assert_single_skill() {
-  local label="$1" count
-  count="$(find "$REPO_ROOT/skills" -name SKILL.md | wc -l | tr -d ' ')"
-  if [ "$count" = "1" ]; then echo "  [PASS] $label"; PASS=$((PASS+1));
-  else echo "  [FAIL] $label — found $count SKILL.md files, expected 1"; FAIL=$((FAIL+1)); fi
-}
-
-# Fails if a reference file points at another file to read (references must be
-# one level deep from SKILL.md, or Claude may only partially read them).
-assert_references_one_level() {
-  local label="$1" hits
-  hits="$(grep -REn '\]\([^)]*\.md\)|read [`"'"'"']?references/' \
-    "$REPO_ROOT/skills/offsec-hunter/references" 2>/dev/null || true)"
-  if [ -z "$hits" ]; then echo "  [PASS] $label"; PASS=$((PASS+1));
-  else echo "  [FAIL] $label — nested reference found:"; echo "$hits"; FAIL=$((FAIL+1)); fi
-}
-
 summary() {
   echo ""; echo "  ---- $PASS passed, $FAIL failed ----"
   [ "$FAIL" -eq 0 ]

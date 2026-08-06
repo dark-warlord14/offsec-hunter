@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-There is no application code here. This repo **is** a single markdown skill
-(`skills/offsec-hunter/SKILL.md`) whose six steps are reference files under
-`skills/offsec-hunter/references/` that instruct an agent how to hunt externally reachable,
-exploitable vulnerabilities. "Editing the product" means editing prose in `SKILL.md` /
-`references/*.md` files. The only executable code is the bash test harness in `tests/`.
+There is no application code here. This repo **is** a set of seven markdown skills
+(`skills/*/SKILL.md`) that instruct an agent how to hunt externally reachable, exploitable
+vulnerabilities: an `offsec-hunter` orchestrator plus one skill per step. "Editing the
+product" means editing prose in `SKILL.md` / `references/*.md` files. The only executable
+code is the bash test harness in `tests/`.
 
 Consequence: the tests are *contract tests over markdown*. Adding, renaming, or rewording a
 documented field, filename, or rule will usually break a `grep` assertion in
@@ -35,14 +35,14 @@ does not follow symlinks), then `/offsec-hunter <VULN>`.
 Six sequential steps plus an orchestrator, each gated on the previous step's **file
 artifact** — reliability comes from artifact-gating, not from trusting the model:
 
-| Step | Reference | Reads | Writes |
+| Step | Skill | Reads | Writes |
 |---|---|---|---|
-| 1 | `references/step-1-map-attack-surface.md` | target code | `surface-map.json` (commit-stamped, comprehension only) |
-| 2 | `references/step-2-scope-target.md` | `surface-map.json` | `hunts/<VULN>/target.md` |
-| 3 | `references/step-3-locate-sinks.md` | `surface-map.json` + `target.md` | `hunts/<VULN>/sinks.json` |
-| 4 | `references/step-4-raise-hypotheses.md` | `sinks.json` | `hypotheses.jsonl` (cheap model, recall) |
-| 5 | `references/step-5-break-hypotheses.md` | `hypotheses.jsonl` | `survivors.jsonl` (strong model, precision) |
-| 6 | `references/step-6-prove-exploit.md` | `survivors.jsonl` | `findings.{md,json}` + `pocs/finding-NNN.md` |
+| 1 | `map-attack-surface` | target code | `surface-map.json` (commit-stamped, comprehension only) |
+| 2 | `scope-target` | `surface-map.json` | `hunts/<VULN>/target.md` |
+| 3 | `locate-sinks` | `surface-map.json` + `target.md` | `hunts/<VULN>/sinks.json` |
+| 4 | `raise-hypotheses` | `sinks.json` | `hypotheses.jsonl` (cheap model, recall) |
+| 5 | `break-hypotheses` | `hypotheses.jsonl` | `survivors.jsonl` (strong model, precision) |
+| 6 | `prove-exploit` | `survivors.jsonl` | `findings.{md,json}` + `pocs/finding-NNN.md` |
 
 `skills/offsec-hunter/SKILL.md` is the orchestrator; steps 4–5 are the body of an autonomous
 round loop that exits after 2 consecutive dry rounds. All round state (`round`, `dry_streak`,
@@ -76,15 +76,16 @@ or crashed orchestrator resumes rather than restarts.
   a cheap model"); concrete tool names belong only in
   `skills/offsec-hunter/references/platform-tools.md`. Do not put `$ARGUMENTS` in skill
   bodies (asserted).
-- **One skill, flat references.** `offsec-hunter` is the only `SKILL.md`; the six step
-  bodies are `references/step-N-*.md`. Neither platform supports skill-to-skill
-  invocation, and Claude Code has no frontmatter for a skill only the orchestrator may
-  invoke — so steps must not be skills (both asserted). References are **flat and one
-  level deep**: a reference file must never point at another file to read, or Claude may
-  read it only partially.
-- **`SKILL.md` is the only guaranteed context.** Anything that must hold even if a
-  reference is never read belongs in `SKILL.md` — which is why each step line there
-  carries its one binding constraint.
+- **Steps are peer skills, invoked by name.** The orchestrator uses each step with
+  `**REQUIRED SUB-SKILL:** Use the \`<name>\` skill` — the idiom superpowers uses, and the
+  one thing that reliably gets a sibling skill loaded (asserted). Reaching a sibling's
+  directory is **allowed** as a fallback when the platform does not surface it by name. The
+  old "no cross-skill relative paths" rule caused a live failure: it read at runtime as
+  "do not open sibling files", so no step skill ever loaded and the orchestrator did step
+  1's work itself.
+- **The orchestrator is the only body guaranteed to be in context.** Its step list carries
+  each step's single hardest constraint, so the constraint binds even if the step skill
+  never loads. Doing a step's work inline from that summary is never acceptable.
 - **Two roots, resolved once.** Target root (code under test) and output root (default
   `<target>/.offsec-hunter/`, or `~/.offsec-hunter/<target-id>/` when the target is
   read-only). Never assume target root == cwd.
