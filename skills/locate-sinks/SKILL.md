@@ -49,5 +49,5 @@ missing or stale, stop: **"no fresh `target.md` — run scope-target first."**
 6. Write `hunts/<VULN>/sinks.json` per the schema in `references/sinks.md`. Record the
    step done in `state.json` with the `input_hash` of `surface-map.json` + `target.md`.
 
-This step runs **once per hunt**, not once per round — it re-runs only when `target.md`
-changes (a steer that redirects the class or threat model).
+This step runs **once per hunt**, not once per round — it re-runs when `surface-map.json`
+or `target.md` changes (a rebuilt map, or a steer that redirects the class or threat model).

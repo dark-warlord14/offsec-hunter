@@ -66,7 +66,7 @@ orchestrator and recorded in `state.json`:
 - `surface-map.json` is **fresh** iff its `commit == git rev-parse HEAD`; otherwise rebuild.
 - `surface-map.json` is **class-agnostic** — it carries no vuln classes and no sinks, so
   every vuln-class hunt against the same commit reuses it. Class-scoped sinks live in
-  `hunts/<VULN>/sinks.json`, which is stale when `target.md` changes.
+  `hunts/<VULN>/sinks.json`, which is stale when `surface-map.json` or `target.md` changes.
 - Each downstream artifact records the hash of its inputs (`input_hash` in `state.json`).
   The `input_hash` staleness gate **governs steering only** (user-driven redirects that
   re-run only the affected steps). Inside the loop, `raise-hypotheses` and
