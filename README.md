@@ -18,6 +18,10 @@ six artifact-gated steps in order: each step reads the artifact from the previou
 step and refuses to continue if that artifact is missing or stale. That keeps the
 workflow honest, even after a resume or a redirected run.
 
+Each step is a peer skill the orchestrator **uses**, never does itself — the step list in
+`SKILL.md` marks every one `**REQUIRED SUB-SKILL:**` and also carries that step's single
+hardest constraint, so the constraint still binds if the step skill fails to load.
+
 1. **map-attack-surface** — build/refresh a reusable, commit-stamped model of how the
    target works: entry points, trust boundaries, input flows, and the assumptions the
    code makes. Comprehension only — no vuln classes, no risk verdicts.
@@ -114,7 +118,9 @@ The main design rationale is in
 the autonomous round loop is designed in
 [`docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md`](docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md);
 the comprehension-first recon split is designed in
-[`docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md`](docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md).
+[`docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md`](docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md);
+why the steps are peer skills and how the orchestrator invokes them is in
+[`docs/superpowers/specs/2026-08-06-skill-invocation-idiom-design.md`](docs/superpowers/specs/2026-08-06-skill-invocation-idiom-design.md).
 
 ## Run-time artifacts
 

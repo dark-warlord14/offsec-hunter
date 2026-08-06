@@ -1,6 +1,10 @@
 # Single-skill consolidation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> ❌ **SUPERSEDED — DO NOT EXECUTE.** This plan was implemented and reverted the same day.
+> Its premise — that neither Claude Code nor Codex supports skill-to-skill invocation — is
+> false; the superpowers plugin does it as its core pattern. See
+> [`../specs/2026-08-06-skill-invocation-idiom-design.md`](../specs/2026-08-06-skill-invocation-idiom-design.md)
+> for the architecture that replaced it. Kept as a record of the wrong turn.
 
 **Goal:** Collapse seven skills into one discoverable skill (`offsec-hunter`) whose six step bodies live as flat `references/` files, so the orchestrator is the only thing the platform can trigger and the only thing that knows about the steps.
 

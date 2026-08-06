@@ -103,11 +103,17 @@ or crashed orchestrator resumes rather than restarts.
 Design rationale is in `docs/superpowers/specs/` (`2026-06-26-offsec-hunter-design.md` for
 the overall design, `2026-07-21-autonomous-round-loop-design.md` for the loop,
 `2026-08-06-comprehension-first-recon-design.md` for the comprehension/security split and
-the prior-art survey behind it, `2026-08-06-single-skill-consolidation-design.md` for the
-single-skill consolidation and the platform research behind it), with task-level plans in
+the prior-art survey behind it, `2026-08-06-skill-invocation-idiom-design.md` for why steps
+are peer skills and how the orchestrator invokes them), with task-level plans in
 `docs/superpowers/plans/`.
 Dated specs and plans are historical records of what was decided when — do not rewrite them
 to match later changes.
+
+⚠️ `2026-08-06-single-skill-consolidation-design.md` and its plan are **superseded and
+wrong**. They argue that neither platform supports skill-to-skill invocation and collapse
+the seven skills into one. That was implemented and reverted the same day — superpowers
+demonstrates the opposite. They are kept as a record of the wrong turn; read the invocation
+idiom spec instead.
 
 ## Conventions
 
