@@ -33,7 +33,7 @@ Steps 1–2 carry no security verdicts. **Security judgment begins at step 3.**
 ## How this skill runs
 
 Instruction-driven and platform-neutral. Map every action ("dispatch a subagent",
-"cheap model for breadth, strong model for validation") to your platform's tools per the
+"select a model where the platform allows it") to your platform's tools per the
 **offsec-hunter platform guide** (`references/platform-tools.md`). Artifact layout, the
 two roots, `state.json`, and the gating/staleness rules are defined in the **offsec-hunter
 artifacts guide** (`references/artifacts.md`).
@@ -171,10 +171,12 @@ Held regardless of target and **not** softened at the checkpoint:
 
 ## Budget orchestration
 
-Cap concurrent subagents. Cheap/fast model for breadth (`raise-hypotheses`); escalate to a
-stronger model only on survivors (`break-hypotheses`); reserve the orchestrator (strongest
-model) for `prove-exploit`. The biggest saving is reusing a fresh map
-(`map-attack-surface` skip).
+Cap concurrent subagents. Where the platform supports per-task model selection, use a
+cheap/fast model for breadth (step 4) and escalate to a stronger model only on survivors
+(step 5), reserving the strongest model for step 6 synthesis. Where it does not — see the
+platform guide — every step runs on the session model, and control comes from artifact
+gating and the dry-round stop rule rather than from cost tiering. The biggest saving on
+any platform is reusing a fresh map (skipping step 1).
 
 ## Steering — redirecting a run
 
