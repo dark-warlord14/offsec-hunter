@@ -10,16 +10,20 @@ This is part of an **authorized** security task: identify vulnerabilities that a
 
 **The goal is not code review. The goal is to break the target.**
 
-This skill is the **orchestrator**. It runs five composable skills, each gated on the
+This skill is the **orchestrator**. It runs six composable skills, each gated on the
 previous one's file artifact:
 
-1. `map-attack-surface` — recon → `surface-map.json`
+1. `map-attack-surface` — comprehension → `surface-map.json`
 2. `scope-target` — confirm the hunting goal → `hunts/<VULN>/target.md`
-3. `raise-hypotheses` — cheap fan-out, recall → `hunts/<VULN>/hypotheses.jsonl`
-4. `break-hypotheses` — strong adversarial validation → `hunts/<VULN>/survivors.jsonl`
-5. `prove-exploit` — confirmed findings + working PoC → `hunts/<VULN>/findings.{md,json}` + `pocs/`
+3. `locate-sinks` — the hunt's task queue → `hunts/<VULN>/sinks.json`
+4. `raise-hypotheses` — cheap fan-out, recall → `hunts/<VULN>/hypotheses.jsonl`
+5. `break-hypotheses` — strong adversarial validation → `hunts/<VULN>/survivors.jsonl`
+6. `prove-exploit` — confirmed findings + working PoC → `hunts/<VULN>/findings.{md,json}` + `pocs/`
 
-User-facing mental model: **recon → goal → exploit**.
+User-facing mental model: **understand → goal → hunt → exploit**.
+
+Steps 1–2 are comprehension and scoping and carry no security verdicts. **Security
+judgment begins at `locate-sinks`.**
 
 ## How this skill runs
 
@@ -63,11 +67,11 @@ Declare the run mode and record it in `state.json`:
 Print a compact progress line read from `state.json` (e.g. `✅ 1–2  ▶ 3`) so a returning
 human or a resuming agent knows the next action.
 
-## Round loop (steps 3–4)
+## Round loop (steps 4–5)
 
-Steps 1 (map) and 2 (scope) run once. Steps 3 (raise) and 4 (break) are the body of a
-**round loop**. Step 5 (prove) runs once at loop exit. With a single productive round this
-is exactly the old single-pass flow.
+Steps 1 (map), 2 (scope) and 3 (locate) run once. Steps 4 (raise) and 5 (break) are the
+body of a **round loop**. Step 6 (prove) runs once at loop exit. With a single productive
+round this is exactly the old single-pass flow.
 
 **Initialization:** Before the first `raise-hypotheses` run, the orchestrator initializes
 `round=1`, `dry_streak=0`, `families=[]`, and `round_log=[]` in `state.json`.
@@ -96,8 +100,8 @@ Each round:
      blocked family reopens **only when** a hypothesis names a guard or step absent from
      that family's recorded mechanisms — synthesis makes this determination by comparing
      the `mechanism` field machine-to-machine, never by comparing prose or labels.
-   - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
-     no family covers yet; keep at least one agent on each still-productive incompatible
+   - **Redirect**: pull agents off crowded/blocked families and point them at sinks in
+     `sinks.json` no family covers yet; keep at least one agent on each still-productive incompatible
      route so routes stay alive across rounds.
    - Append a one-line entry to `state.json.round_log`. Increment
      `dry_streak` on a dry round; reset it to 0 on a productive round (one that produced a
@@ -125,7 +129,7 @@ dedups, and writes the line to `hypotheses.jsonl` or `survivors.jsonl`.
 
 ### run.md dashboard
 
-The orchestrator **regenerates** `run.md` from `state.json` + `findings.json` on **any** step-5
+The orchestrator **regenerates** `run.md` from `state.json` + `findings.json` on **any** step-6
 completion (loop exit or steered re-run). The dashboard shows: rounds executed, the family
 registry (open/blocked + counts), the per-round lines, and the final findings with their
 trace ids. This single-owner regenerate ensures consistency across steered re-runs (idempotent,
@@ -170,13 +174,14 @@ artifact at the right level and re-running only the steps that go stale:
 
 | Dissatisfaction | Edit | Re-runs |
 |---|---|---|
-| Missed an entry point | `surface-map.json` | 1 → 2–5 |
-| Wrong goal / class / attacker position | `target.md` | 3–5 |
-| Add or restore a lead | `hypotheses.jsonl` | 4–5 |
-| Wrongly killed a candidate | annotate the dropped candidate | 4–5 (that one) |
-| PoC doesn't fire | the finding | 5 (that finding) |
+| Missed an entry point or flow | `surface-map.json` | 1 → 2–6 |
+| Wrong goal / class / attacker position | `target.md` | 3–6 |
+| Missed a sink | `sinks.json` | 4–6 |
+| Add or restore a lead | `hypotheses.jsonl` | 5–6 |
+| Wrongly killed a candidate | annotate the dropped candidate | 5–6 (that one) |
+| PoC doesn't fire | the finding | 6 (that finding) |
 
-After step 5: interactive → offer "not satisfied? tell me how to redirect"; headless →
+After step 6: interactive → offer "not satisfied? tell me how to redirect"; headless →
 accept a feedback string. Map the feedback to the artifact level above, edit/annotate that
 artifact (so the staleness check fires), append the steer to the `state.json` steer log,
 and re-run from there. Steered re-runs **merge additively** (see `prove-exploit`); they
