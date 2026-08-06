@@ -13,7 +13,7 @@ breaks, and leave behind enough evidence that the result is auditable.
 
 ## How it works
 
-The plugin is made of seven composable skills. The `offsec-hunter` orchestrator runs
+The plugin is **one skill** — `offsec-hunter` — whose six steps live as reference files it loads on demand. The `offsec-hunter` orchestrator runs
 six artifact-gated steps in order: each step reads the artifact from the previous
 step and refuses to continue if that artifact is missing or stale. That keeps the
 workflow honest, even after a resume or a redirected run.
@@ -44,15 +44,15 @@ and each finding's `finding -> survivor -> hypothesis -> sink` trace.
 
 A completed hunt can also be **steered**. Edit the artifact at the right level
 (`surface-map.json`, `target.md`, `hypotheses.jsonl`, and so on), then re-run the
-hunt; only the stale steps run again, and new results merge additively. The skill
+hunt; only the stale steps run again, and new results merge additively. The step
 bodies stay platform-neutral, with per-platform tool mapping in
 [`skills/offsec-hunter/references/platform-tools.md`](skills/offsec-hunter/references/platform-tools.md).
 
 ## Install
 
-`offsec-hunter` ships as seven composable
-[open-standard](https://agentskills.io/specification) skills. They work in Claude
-Code and Codex without modification. Clone the repo once, then copy the skills into
+`offsec-hunter` ships as a single
+[open-standard](https://agentskills.io/specification) skill. It works in Claude
+Code and Codex without modification. Clone the repo once, then copy the skill into
 the tool you use.
 
 ```bash
@@ -80,6 +80,19 @@ after a `git pull` to update an installed copy.
 > **Note:** install with `cp -R`, not a symlink. Codex's skill scanner does not follow
 > symlinks, so a symlinked skill silently fails to appear.
 
+### Upgrading from 1.x
+
+1.x installed seven separate skills. Overwriting with `cp -R` leaves the six old step
+directories in place, where they stay independently triggerable and contradict the
+consolidated orchestrator. Remove them first:
+
+```bash
+rm -rf ~/.claude/skills/{map-attack-surface,scope-target,locate-sinks,raise-hypotheses,break-hypotheses,prove-exploit}
+rm -rf ~/.codex/skills/{map-attack-surface,scope-target,locate-sinks,raise-hypotheses,break-hypotheses,prove-exploit}
+```
+
+Then re-run the `cp -R` for your tool.
+
 ## Usage
 
 ```
@@ -98,15 +111,11 @@ offsec-hunter/
 ├── docs/superpowers/specs/  ·  docs/superpowers/plans/
 ├── tests/                         # static contract + behavioral recall tests
 └── skills/
-    ├── offsec-hunter/             # orchestrator
-    │   ├── SKILL.md
-    │   └── references/{platform-tools.md, artifacts.md}
-    ├── map-attack-surface/        # step 1  (references/surface-map.md)
-    ├── scope-target/              # step 2
-    ├── locate-sinks/              # step 3  (references/sinks.md)
-    ├── raise-hypotheses/          # step 4
-    ├── break-hypotheses/          # step 5
-    └── prove-exploit/             # step 6
+    └── offsec-hunter/             # the only skill
+        ├── SKILL.md               # orchestrator
+        └── references/
+            ├── platform-tools.md  ·  artifacts.md
+            └── step-1-map-attack-surface.md … step-6-prove-exploit.md
 ```
 
 The main design rationale is in
@@ -114,7 +123,8 @@ The main design rationale is in
 the autonomous round loop is designed in
 [`docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md`](docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md);
 the comprehension-first recon split is designed in
-[`docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md`](docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md).
+[`docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md`](docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md);
+the single-skill consolidation is designed in [`docs/superpowers/specs/2026-08-06-single-skill-consolidation-design.md`](docs/superpowers/specs/2026-08-06-single-skill-consolidation-design.md).
 
 ## Run-time artifacts
 
