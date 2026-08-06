@@ -35,25 +35,25 @@ actually changed.
       "from": "unauth",
       "to": "session",
       "enforced_at": "path/to/middleware.ext:LINE",
-      "notes": "how the gate works / where it might be bypassable"
-    }
-  ],
-  "sinks": [
-    {
-      "id": "sink-1",
-      "origin": "target | dependency",
-      "class": "ssrf | rce | sqli | ssti | deserialization | authz | parsing",
-      "location": "path/to/file.ext:LINE",
-      "summary": "outbound HTTP fetch of a request-supplied URL"
+      "notes": "how the gate works"
     }
   ],
   "flows": [
     {
       "from_entry": "ep-1",
-      "to_sink": "sink-1",
-      "input_path": "body.url -> validate() -> http.get()",
-      "guards": ["allowlist check at file.ext:LINE"],
+      "input_path": "request body field 'url' -> validation helper -> outbound HTTP client call",
+      "reaches": "path/to/file.ext:LINE",
+      "operation": "issues an outbound network request to a caller-supplied address",
+      "validation": ["compares the host against a configured allowlist at path/to/file.ext:LINE"],
       "reachable_from": "unauth | session | m2m | local-user | input-supplier"
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "asm-1",
+      "at": "path/to/file.ext:LINE",
+      "assumes": "the address argument was already validated by the caller",
+      "enforced_here": false
     }
   ]
 }
@@ -62,9 +62,19 @@ actually changed.
 ## Guidance
 
 - Keep it a **reachability index**, not a full code dump. A flow exists only if external
-  input can plausibly reach the sink.
-- `flows` is what `raise-hypotheses` fans out over — each flow is a hypothesis seed.
-- Record `guards` honestly; `break-hypotheses`'s job is to determine whether they hold.
+  input can plausibly reach its endpoint. This is the bound on the stage.
+- **Comprehension only.** No vuln classes, no risk ranking, no bypass speculation. Record
+  `operation` factually ("constructs a query from concatenated input"), not as a verdict.
+- **Language- and ecosystem-agnostic.** Describe an operation by what it does, never by a
+  concrete API name — "starts a subprocess", not `subprocess.run()`. Every path and
+  extension above (`path/to/file.ext:LINE`) is an illustrative placeholder; infer the
+  target's real conventions from the target.
+- `validation` records **what the code checks**, not whether the check holds. Whether it
+  holds is `break-hypotheses`'s job.
+- `flows` and `assumptions` are what `locate-sinks` fans out over to derive `sink-N` ids
+  once a vuln class is confirmed.
+- The map is **class-agnostic and target-level**, so every vuln-class hunt against this
+  commit reuses it.
 - Non-web targets are first-class: an `entry_point` may be a parsed input file
   (`file-input`), a CLI, an IPC/socket, or a local service. Record these the same
   way — the `scope-target` checkpoint reasons over whatever the map shows.

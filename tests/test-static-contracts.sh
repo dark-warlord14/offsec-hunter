@@ -85,10 +85,15 @@ for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove
   assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
 done
 
-# --- map dependency sinks + ids (Task 3) ---
-assert_file_contains "$M" 'sink-[0-9]|stable id' "step1 assigns stable sink ids"
-assert_file_contains "$M" '[Dd]ependenc' "step1 conditionally indexes vendored dependencies"
-assert_file_contains "$M" 'skip this|no.*dependency sinks' "step1 dependency indexing is conditional"
+# --- map is comprehension-only (2026-08-06) ---
+assert_file_not_contains "$M" 'sink-[0-9]|high-risk sink|[Ss]inks —' "step1 emits no sinks"
+assert_file_contains "$M" '[Cc]omprehension only' "step1 declares comprehension-only"
+assert_file_contains "$M" 'asm-[0-9]|[Aa]ssumption' "step1 records assumptions"
+assert_file_contains "$M" 'reachab' "step1 keeps reachability pruning as its bound"
+assert_file_contains "$M" 'language|ecosystem' "step1 is language-agnostic"
+assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'asm-[0-9]' "surface-map schema has assumption ids"
+assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'language|ecosystem' "surface-map schema is language-agnostic"
+assert_file_not_contains "skills/map-attack-surface/references/surface-map.md" '"sinks"' "surface-map schema has no sinks array"
 
 # --- Orchestrator round loop (Task 2) ---
 assert_file_contains "$O" '[Rr]ound loop' "orchestrator documents the round loop"
@@ -179,7 +184,7 @@ done
 # --- v2: schema fields (Task 18) ---
 assert_file_contains "$A" 'guards' "artifacts documents guards field on survivors"
 assert_file_contains "$A" 'origin' "artifacts documents origin field on sinks"
-assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'origin' "surface-map schema includes origin field"
+assert_file_contains "skills/locate-sinks/references/sinks.md" 'origin' "sinks schema includes origin field"
 
 # --- v2: rounds=1 regression (Task 18) ---
 assert_file_contains "$O" 'single(-| )?pass|single productive round' "orchestrator preserves single-pass at rounds=1"
