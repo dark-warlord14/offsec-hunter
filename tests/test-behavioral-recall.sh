@@ -22,11 +22,17 @@ check "$out" 'raise.?hypotheses'    "names step 4"
 check "$out" 'break.?hypotheses'    "names step 5"
 check "$out" 'prove.?exploit'       "names step 6"
 check "$out" 'artifact|gate|state\.json' "describes artifact-gating"
-check "$out" 'reference|references/' "describes step references"
 
 out2="$(run_claude 'In offsec-hunter, what is the difference between interactive and headless mode? Be brief.')"
 check "$out2" 'headless' "explains headless mode"
 check "$out2" 'confirm|ask|interactive' "explains interactive mode"
+
+# The mandatory-read rule: a step must never be executed from SKILL.md's summary line.
+# Asked as its own prompt — a question about steps and gating does not elicit file layout.
+out4="$(run_claude 'In offsec-hunter, what exactly must you do before executing any given step, and where do the step instructions live? Be brief.')"
+check "$out4" 'read'                 "says the step file must be read"
+check "$out4" 'references/step'      "locates step instructions in references/"
+check "$out4" 'summary|SKILL\.md'    "contrasts the reference with the SKILL.md summary"
 
 out3="$(run_claude 'In offsec-hunter, when does the hunt stop launching new rounds, and what is a family registry? Be brief.')"
 check "$out3" 'dry|two rounds|2 rounds' "explains the dry-round stop rule"
