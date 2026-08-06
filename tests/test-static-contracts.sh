@@ -195,4 +195,10 @@ assert_file_contains "$L" 'skip this|no.*dependency sinks' "step3 dependency ind
 assert_file_contains "$L" 'sinks\.json — schema' "step3 carries its schema inline"
 assert_file_contains "$L" 'every language|ecosystem' "step3 is language-agnostic"
 
+# --- Task 4: correct platform guide (Codex model-tiering and fan-out) ---
+PT="skills/offsec-hunter/references/platform-tools.md"
+assert_file_contains "$PT" 'inherit' "platform guide states Codex subagents inherit the model"
+assert_file_contains "$PT" 'read the reference file|Read tool|cat' "platform guide maps loading a step reference"
+assert_file_not_contains "$PT" 'select a fast/cheap model for the task' "platform guide drops the false Codex model-tiering claim"
+
 summary
