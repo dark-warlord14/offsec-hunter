@@ -1,11 +1,4 @@
----
-name: raise-hypotheses
-description: Step 4 of offsec-hunter. Cheap, wide fan-out — dispatch many shallow subagents on a fast model to generate vulnerability hypotheses tied to the target vuln class and the mapped sinks. Optimizes recall, not precision. Use when generating vulnerability hypotheses for a specific target and vuln class.
----
-
-# raise-hypotheses — step 4
-
-**Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
+# Step 4 — raise-hypotheses
 
 Generate many candidate vulnerabilities. Optimize for **recall, not precision** — a later
 step breaks them. Produces candidates for `hunts/<VULN>/hypotheses.jsonl` (the orchestrator
