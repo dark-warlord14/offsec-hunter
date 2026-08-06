@@ -117,6 +117,8 @@ assert_file_contains "$A" '"families"' "artifacts documents family registry"
 assert_file_contains "$A" '"round_log"' "artifacts documents round_log"
 assert_file_contains "$A" 'sink-[0-9]' "artifacts documents stable sink ids"
 assert_file_contains "$A" '[Rr]esumable' "artifacts documents resumable loop"
+assert_file_contains "$A" 'sinks\.json' "artifacts documents sinks.json"
+assert_file_contains "$A" 'locate-sinks' "artifacts documents the locate-sinks step"
 assert_file_contains "$A" '"chain"' "artifacts documents chain field"
 
 # --- raise round-aware + ids (Task 4) ---
