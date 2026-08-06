@@ -45,7 +45,7 @@ target-level and class-agnostic, so every vuln-class hunt against this commit re
      itself enforce (e.g. "assumes `url` was already validated by its caller", "trusts
      the length field in the parsed header"). Assign stable `asm-N` ids; `locate-sinks`
      consumes them when deriving sinks.
-4. Write `surface-map.json` per the schema in `references/surface-map.md`, stamped with
+4. Write `surface-map.json` per the schema below, stamped with
    `commit` = current `HEAD`. Record the step as done in `state.json`.
 
 Prioritize what is **reachable from crafted input** over reading everything.
