@@ -1,9 +1,9 @@
 ---
 name: raise-hypotheses
-description: Step 3 of offsec-hunter. Cheap, wide fan-out — dispatch many shallow subagents on a fast model to generate vulnerability hypotheses tied to the target vuln class and the mapped sinks. Optimizes recall, not precision. Use when generating vulnerability hypotheses for a specific target and vuln class.
+description: Step 4 of offsec-hunter. Cheap, wide fan-out — dispatch many shallow subagents on a fast model to generate vulnerability hypotheses tied to the target vuln class and the mapped sinks. Optimizes recall, not precision. Use when generating vulnerability hypotheses for a specific target and vuln class.
 ---
 
-# raise-hypotheses — step 3
+# raise-hypotheses — step 4
 
 **Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
 
@@ -13,13 +13,13 @@ writes the file).
 
 ## Gate
 
-Read `surface-map.json` and `hunts/<VULN>/target.md`. If `target.md` is missing or stale,
-stop: **"no fresh `target.md` — run scope-target first."**
+Read `hunts/<VULN>/sinks.json` and `hunts/<VULN>/target.md`. If `sinks.json` is missing
+or stale, stop: **"no fresh `sinks.json` — run locate-sinks first."**
 
 ## Procedure
 
 Dispatch **many shallow subagents on a cheap/fast model** (see the offsec-hunter platform
-guide), each chasing **one** hypothesis tied to the target vuln class, a mapped sink, and
+guide), each chasing **one** hypothesis tied to the target vuln class, a sink from `sinks.json`, and
 the **confirmed delivery vector + attacker position** from `target.md` — e.g. "does any
 handler fetch a user-supplied URL without an allowlist?", or "does the file parser trust a
 length field from the input file?".
@@ -39,7 +39,7 @@ and stamping the current `"round": N`:
 This step is **round-aware**: on each round the orchestrator tells you which families to
 expand and which mapped sinks are still uncovered. Because a dispatched subagent sees only
 its prompt, **inject its context** — pass `output_root`, `target_root`, the exact artifact
-paths to read (`surface-map.json`, `hunts/<VULN>/target.md`), the assigned `sink-N` id and
+paths to read (`hunts/<VULN>/sinks.json`, `hunts/<VULN>/target.md`), the assigned `sink-N` id and
 family, and a one-line threat-model summary.
 
-Record the step done in `state.json` with the `input_hash` of `target.md`.
+Record the step done in `state.json` with the `input_hash` of `sinks.json`.
