@@ -34,6 +34,13 @@ assert_file_contains "$O" '[Oo]utput root' "orchestrator resolves output root"
 assert_file_contains "$O" '[Ss]teer' "orchestrator documents steering"
 assert_file_contains "$O" 'artifacts\.md' "orchestrator references artifacts guide by name"
 assert_file_exists "skills/offsec-hunter/references/artifacts.md" "artifacts guide exists"
+assert_file_contains "$O" 'references/step-1-map-attack-surface\.md' "orchestrator names step 1 reference"
+assert_file_contains "$O" 'references/step-6-prove-exploit\.md' "orchestrator names step 6 reference"
+assert_file_contains "$O" '[Rr]ead.*references/step' "orchestrator instructs reading the step file"
+assert_file_contains "$O" 'comprehension only' "orchestrator carries step 1 binding constraint"
+assert_file_contains "$O" 'write .?state\.json.? .*before|[Bb]efore .*step 1' "orchestrator writes state.json before step 1"
+assert_file_not_contains "$O" 'invoke the .[a-z-]+. skill' "orchestrator no longer says invoke-by-name"
+assert_file_not_contains "$O" 'Never reach into' "orchestrator drops the reach-into prohibition"
 
 # --- map-attack-surface (Task 3) ---
 assert_file_contains "$M" 'surface-map\.json' "step1 writes surface-map.json"
