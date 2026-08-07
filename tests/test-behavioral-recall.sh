@@ -1,18 +1,37 @@
 #!/usr/bin/env bash
 # Tier 2 — behavioral recall: assert the agent describes the workflow correctly.
 # Opt-in (LLM calls): RUN_BEHAVIORAL=1 bash tests/run-skill-tests.sh
+#
+# Runs against either platform, since the skills target both:
+#   AGENT=claude (default)  RUN_BEHAVIORAL=1 bash tests/run-skill-tests.sh
+#   AGENT=codex             RUN_BEHAVIORAL=1 bash tests/run-skill-tests.sh
+#
+# Codex note: `codex exec` echoes the loaded skill body into its transcript, so grepping
+# raw stdout would match the SKILL.md text instead of the agent's answer — a false pass.
+# `-o FILE` writes only the final message, which is what we assert against.
 set -uo pipefail
 TIMEOUT="${CLAUDE_PROMPT_TIMEOUT:-120}"
+AGENT="${AGENT:-claude}"
 fail=0
 
-run_claude() { timeout "$TIMEOUT" claude -p "$1" 2>&1; }
+run_agent() {
+  case "$AGENT" in
+    claude) timeout "$TIMEOUT" claude -p "$1" 2>&1 ;;
+    codex)
+      local out; out="$(mktemp)"
+      timeout "$TIMEOUT" codex exec --skip-git-repo-check -o "$out" "$1" </dev/null >/dev/null 2>&1
+      cat "$out"; rm -f "$out" ;;
+    *) echo "unknown AGENT: $AGENT" >&2; exit 2 ;;
+  esac
+}
+run_claude() { run_agent "$1"; }   # back-compat alias
 
 check() { # haystack pattern label
   if echo "$1" | grep -Eiq "$2"; then echo "  [PASS] $3";
   else echo "  [FAIL] $3"; fail=1; fi
 }
 
-echo "=== Behavioral recall ==="
+echo "=== Behavioral recall (agent: $AGENT) ==="
 out="$(run_claude 'Describe the offsec-hunter skill: list its steps in order and how it gates between them. Be brief.')"
 
 check "$out" 'map.?attack.?surface' "names step 1"
