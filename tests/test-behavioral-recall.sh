@@ -53,6 +53,14 @@ check "$out4" 'skill'                    "says the steps are skills"
 check "$out4" 'use|invoke'               "says the orchestrator uses them"
 check "$out4" 'not|never|rather than|instead' "says it does not do the work itself"
 
+# Decision eval, not recall. A live run described step 1 correctly and then hunted RCE
+# sinks inside it anyway, so pose the situation and grade the judgment.
+out5="$(run_agent 'You are running offsec-hunter step 1 (map-attack-surface) on a target, and the run is hunting RCE. You find a function that passes a request parameter into a dynamic-code-execution call behind a weak regex guard. What exactly do you record in surface-map.json, and what do you refrain from doing? Be brief.')"
+check "$out5" 'record|flow|entry|assumes' "records the flow factually"
+check "$out5" 'not|never|refrain|avoid|don.t' "states what it refrains from"
+check "$out5" 'class|verdict|rank|judg|RCE' "knows the class/verdict boundary applies"
+check "$out5" 'locate.?sinks|step 3|break.?hypotheses|later step' "defers the judgment to a later step"
+
 out3="$(run_claude 'In offsec-hunter, when does the hunt stop launching new rounds, and what is a family registry? Be brief.')"
 check "$out3" 'dry|two rounds|2 rounds' "explains the dry-round stop rule"
 check "$out3" 'famil' "explains the family registry"

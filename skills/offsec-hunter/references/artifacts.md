@@ -34,7 +34,7 @@ orchestrator and recorded in `state.json`:
   "target_root": "/abs/path/to/target",
   "output_root": "/abs/path/to/target/.offsec-hunter",
   "mode": "interactive",
-  "vuln": "RCE",
+  "vuln": "RCE",                    // written by scope-target (step 2); ABSENT during step 1
   "round": 2,
   "dry_streak": 1,
   "families": [
@@ -67,6 +67,12 @@ orchestrator and recorded in `state.json`:
 - `surface-map.json` is **class-agnostic** — it carries no vuln classes and no sinks, so
   every vuln-class hunt against the same commit reuses it. Class-scoped sinks live in
   `hunts/<VULN>/sinks.json`, which is stale when `surface-map.json` or `target.md` changes.
+- **`state.json` carries no `vuln` field until `scope-target` (step 2) writes it.**
+  `state.json` is step 1's only input channel, and step 1 runs in an isolated context that
+  cannot see the conversation. Withholding `vuln` until step 2 means step 1 cannot learn the
+  class even in principle. A `surface-map.json` whose values name a vulnerability class or
+  contain a verdict is **invalid regardless of its commit stamp** — rebuild it rather than
+  reuse it, or every later hunt inherits that class's blind spot.
 - Each downstream artifact records the hash of its inputs (`input_hash` in `state.json`).
   The `input_hash` staleness gate **governs steering only** (user-driven redirects that
   re-run only the affected steps). Inside the loop, `raise-hypotheses` and

@@ -44,7 +44,9 @@ artifacts guide** (`references/artifacts.md`).
 Reliability comes from **artifact-gating**, not trust:
 
 1. **Before step 1**, resolve the two roots and the run mode, then write `state.json`.
-   Every later step reads them from there. Do this before any other action.
+   Every later step reads them from there. Do this before any other action. Write it
+   **without a `vuln` field** — `scope-target` adds that in step 2. `state.json` is step 1's
+   only input channel, so leaving the class out of it is what keeps step 1 class-blind.
 2. **Before step 1, also read the artifacts guide and the platform guide**
    (`references/artifacts.md`, `references/platform-tools.md`). The first defines
    `state.json`, the artifact tree, and the gating rules; the second maps this skill's
@@ -133,6 +135,19 @@ skills, conversation, or files already read. Every raise/break delegation prompt
 `sink-N` id + its family, and a one-line threat-model summary. The family registry stays
 orchestrator-only; a subagent receives only its slice in-prompt.
 
+**Step 1 is the inverse case: delegated and deliberately class-blind.** On platforms where
+the skill forks its own context, that isolation is automatic. Where it does not, dispatch
+`map-attack-surface` to a subagent explicitly. Its prompt carries `target_root`,
+`output_root`, and the artifact path — and **must not contain the vuln class, the threat
+model, or any word naming a vulnerability category.** Do not put the class in step 1's
+todo or plan label either; "Fresh RCE hunt" as a heading is itself contamination.
+
+Why isolation rather than instruction: the map is target-level and reused by every
+vuln-class hunt against the same commit. An agent that knows the class cannot produce a
+class-agnostic map — it will select the flows that class cares about and frame boundaries as
+defences against it, while believing it is doing comprehension. Withholding the class is the
+mechanism; asking the agent not to think about it is not.
+
 **The orchestrator is the sole id authority.** Under subagent isolation, parallel raise/break
 subagents cannot see each other's ids and would collide if left to invent their own. So
 subagents never assign `h-N`, `family`, or `chain`: they return untagged judgments keyed
@@ -153,9 +168,12 @@ no appending).
 
 Hunt for: **the vuln class the user provided when invoking this skill (or `broad` if none)**
 
-The chosen class is confirmed inside `scope-target` and written into `target.md`. If no
-class was provided: interactive → `scope-target` asks; headless → default to `broad` and
-log it.
+The chosen class is confirmed inside `scope-target` and written into `target.md` and
+`state.json`. If no class was provided: interactive → `scope-target` asks; headless →
+default to `broad` and log it.
+
+**Hold the class out of step 1.** Note where this section sits: everything above it — the
+map — is built before the class is recorded anywhere step 1 can reach. Keep it that way.
 
 ## Scope — the default threat model (a proposal, not a fixed rule)
 
