@@ -21,14 +21,30 @@ bash tests/run-skill-tests.sh                    # Tier 1: static contract tests
 bash tests/test-static-contracts.sh              # same, directly
 RUN_BEHAVIORAL=1 bash tests/run-skill-tests.sh   # + Tier 2 behavioral recall (spawns `claude -p`)
 CLAUDE_PROMPT_TIMEOUT=240 RUN_BEHAVIORAL=1 bash tests/run-skill-tests.sh
+bash tests/run-skill-tests.sh 2>&1 | grep -i sink   # "single test": filter by assertion label
 ```
 
-There is no build or lint step. Tier 2 is opt-in because it makes real LLM calls; it asserts
-that an agent, given the installed skills, *describes* the workflow correctly.
+There is no build or lint step, and no way to run one assertion in isolation — the suite is
+a flat script, so filter its output by label instead. Assertions are built from four helpers
+in `tests/test-helpers.sh` (`assert_file_exists`, `assert_file_absent`,
+`assert_file_contains`, `assert_file_not_contains`); each prints `[PASS]`/`[FAIL] <label>`
+and increments a counter that `summary` reports.
 
-To try a change end-to-end you must install the skills, since a repo checkout is not on the
-skill path: `cp -R skills/* ~/.claude/skills/` (use `cp -R`, not a symlink — Codex's scanner
-does not follow symlinks), then `/offsec-hunter <VULN>`.
+Tier 2 is opt-in because it makes real LLM calls; it asserts that an agent, given the
+**installed** skills, *describes* the workflow correctly.
+
+To try a change end-to-end — and before any Tier 2 run — install the skills, since a repo
+checkout is not on the skill path. `cp -R` **merges**, so remove first when skill directories
+have been renamed or dropped, or stale ones linger and stay independently triggerable:
+
+```bash
+rm -rf ~/.claude/skills/{offsec-hunter,map-attack-surface,scope-target,locate-sinks,raise-hypotheses,break-hypotheses,prove-exploit}
+cp -R skills/* ~/.claude/skills/     # Claude Code
+cp -R skills/* ~/.codex/skills/      # Codex — this repo targets both
+```
+
+Use `cp -R`, not a symlink: Codex's scanner does not follow symlinks. Then `/offsec-hunter
+<VULN>` (Claude Code) or `$offsec-hunter` (Codex).
 
 ## Architecture
 
@@ -37,7 +53,7 @@ artifact** — reliability comes from artifact-gating, not from trusting the mod
 
 | Step | Skill | Reads | Writes |
 |---|---|---|---|
-| 1 | `map-attack-surface` | target code | `surface-map.json` (commit-stamped, comprehension only) |
+| 1 | `map-attack-surface` | target code | `surface-map.json` (commit-stamped, comprehension only; runs class-blind in a forked context) |
 | 2 | `scope-target` | `surface-map.json` | `hunts/<VULN>/target.md` |
 | 3 | `locate-sinks` | `surface-map.json` + `target.md` | `hunts/<VULN>/sinks.json` |
 | 4 | `raise-hypotheses` | `sinks.json` | `hypotheses.jsonl` (cheap model, recall) |
@@ -55,6 +71,16 @@ or crashed orchestrator resumes rather than restarts.
   target works and what is being hunted; they carry no vuln classes and no risk verdicts.
   Security judgment begins at `locate-sinks`, which is the sole assigner of `sink-N` ids.
   Do not reintroduce sink or vuln-class labelling into `map-attack-surface`.
+- **Step 1 is class-blind by construction, not by instruction.** `map-attack-surface` runs
+  in an isolated context (`context: fork` frontmatter on Claude Code; an explicitly
+  class-free delegation prompt on Codex) so it cannot see which vuln class the run is
+  hunting. `state.json` — its only input channel — carries no `vuln` field until
+  `scope-target` (step 2) writes it. This is deliberate: a prior run that left step 1 in the
+  orchestrator's context produced a "class-agnostic" map with 25 RCE-specific values because
+  the agent could see "find me RCE" and, believing it was doing comprehension, selected for
+  it. Prose telling the agent not to think about the class does not work; withholding the
+  class does. Do not add the class to `state.json` before step 2, remove the fork frontmatter,
+  or inject the threat model into step 1's prompt.
 - **Reachability is step 1's bound.** `map-attack-surface` records only what external input
   can plausibly reach. This is a factual property, not a verdict, so it survives the
   comprehension-only rule — and it is the only thing keeping that step from becoming an
