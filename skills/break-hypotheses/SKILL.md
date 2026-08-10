@@ -1,9 +1,9 @@
 ---
 name: break-hypotheses
-description: Step 4 of offsec-hunter. Deep adversarial validation — dispatch stronger-model subagents that try to break each hypothesis, not confirm it. Keeps only candidates that survive every guard and are reachable per the confirmed threat model. Use when validating and filtering vulnerability hypotheses through adversarial testing.
+description: Step 5 of offsec-hunter. Deep adversarial validation — dispatch stronger-model subagents that try to break each hypothesis, not confirm it. Keeps only candidates that survive every guard and are reachable per the confirmed threat model. Use when validating and filtering vulnerability hypotheses through adversarial testing.
 ---
 
-# break-hypotheses — step 4
+# break-hypotheses — step 5
 
 **Guard:** If `state.json` is absent, stop with "run the `offsec-hunter` orchestrator first".
 
@@ -31,13 +31,13 @@ guide) to trace it across files and attempt to refute it:
 - Does the result meet the **confirmed win condition** (so a DoS or memory-safety crash
   counts when the user scoped it in)?
 - Is it **chainable** — does it look like it could chain with another candidate or a
-  **dependency bug** (when dependency sinks exist — sinks with `origin: dependency`, see map-attack-surface) to reach the
+  **dependency bug** (when dependency sinks exist — sinks with `origin: dependency`, see locate-sinks) to reach the
   win condition? A survivor may be part of a multi-step chain (e.g. auth-bypass → RCE).
   **Flag** chainability; the orchestrator assembles the actual chain from the round's
   candidates.
 
 Because a break subagent sees only its prompt, **inject its context** — pass `output_root`,
-`target_root`, the exact artifact paths to read (`surface-map.json`, `target.md`,
+`target_root`, the exact artifact paths to read (`sinks.json`, `target.md`,
 `hypotheses.jsonl`), and the **full fields of the specific candidate** being refuted
 (`id`, `sink`, `suspected_source`, `path`, `mechanism`).
 

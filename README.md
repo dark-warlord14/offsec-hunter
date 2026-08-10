@@ -13,23 +13,32 @@ breaks, and leave behind enough evidence that the result is auditable.
 
 ## How it works
 
-The plugin is made of six composable skills. The `offsec-hunter` orchestrator runs
-five artifact-gated steps in order: each step reads the artifact from the previous
+The plugin is made of seven composable skills. The `offsec-hunter` orchestrator runs
+six artifact-gated steps in order: each step reads the artifact from the previous
 step and refuses to continue if that artifact is missing or stale. That keeps the
 workflow honest, even after a resume or a redirected run.
 
-1. **map-attack-surface** — build/refresh a reusable, commit-stamped attack-surface map.
+Each step is a peer skill the orchestrator **uses**, never does itself — the step list in
+`SKILL.md` marks every one `**REQUIRED SUB-SKILL:**` and also carries that step's single
+hardest constraint, so the constraint still binds if the step skill fails to load.
+
+1. **map-attack-surface** — build/refresh a reusable, commit-stamped model of how the
+   target works: entry points, trust boundaries, input flows, and the assumptions the
+   code makes. Comprehension only — no vuln classes, no risk verdicts.
 2. **scope-target** — define the hunting goal: vuln class + confirmed threat model
    (attacker position, delivery vector, win condition). Interactive confirms with you;
    headless accepts and logs.
-3. **raise-hypotheses** — many cheap subagents generate hypotheses (recall).
-4. **break-hypotheses** — stronger subagents adversarially confirm reachability (precision).
-5. **prove-exploit** — confirmed findings + a working PoC, as `findings.md` (human) and
+3. **locate-sinks** — turn the class-agnostic map plus the confirmed threat model into
+   the hunt's task queue: the sinks worth attacking, each with a stable id. Security
+   judgment starts here.
+4. **raise-hypotheses** — many cheap subagents generate hypotheses (recall).
+5. **break-hypotheses** — stronger subagents adversarially confirm reachability (precision).
+6. **prove-exploit** — confirmed findings + a working PoC, as `findings.md` (human) and
    `findings.json` (machine), each PoC a minimal `pocs/finding-NNN.md` (one-line summary +
    the exact curl / request chain / WebSocket message in a fenced block), with an
    empty-results report when nothing is exploitable.
 
-Steps 3-4 run as an **autonomous round loop**. The orchestrator raises hypotheses,
+Steps 4-5 run as an **autonomous round loop**. The orchestrator raises hypotheses,
 tries to break them, synthesizes what survived, then redirects the next round. It
 groups related ideas into a family registry, blocks routes that have gone stale,
 and keeps launching rounds until two rounds in a row come up dry. Round state lives
@@ -45,7 +54,7 @@ bodies stay platform-neutral, with per-platform tool mapping in
 
 ## Install
 
-`offsec-hunter` ships as six composable
+`offsec-hunter` ships as seven composable
 [open-standard](https://agentskills.io/specification) skills. They work in Claude
 Code and Codex without modification. Clone the repo once, then copy the skills into
 the tool you use.
@@ -98,15 +107,20 @@ offsec-hunter/
     │   └── references/{platform-tools.md, artifacts.md}
     ├── map-attack-surface/        # step 1  (references/surface-map.md)
     ├── scope-target/              # step 2
-    ├── raise-hypotheses/          # step 3
-    ├── break-hypotheses/          # step 4
-    └── prove-exploit/             # step 5
+    ├── locate-sinks/              # step 3  (references/sinks.md)
+    ├── raise-hypotheses/          # step 4
+    ├── break-hypotheses/          # step 5
+    └── prove-exploit/             # step 6
 ```
 
 The main design rationale is in
 [`docs/superpowers/specs/2026-06-26-offsec-hunter-design.md`](docs/superpowers/specs/2026-06-26-offsec-hunter-design.md);
 the autonomous round loop is designed in
-[`docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md`](docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md).
+[`docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md`](docs/superpowers/specs/2026-07-21-autonomous-round-loop-design.md);
+the comprehension-first recon split is designed in
+[`docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md`](docs/superpowers/specs/2026-08-06-comprehension-first-recon-design.md);
+why the steps are peer skills and how the orchestrator invokes them is in
+[`docs/superpowers/specs/2026-08-06-skill-invocation-idiom-design.md`](docs/superpowers/specs/2026-08-06-skill-invocation-idiom-design.md).
 
 ## Run-time artifacts
 
@@ -116,7 +130,7 @@ When the skill runs against a target, it writes working artifacts under the
 the skill can use a central `~/.offsec-hunter/<target-id>/` directory instead.
 
 Per-hunt artifacts live under `hunts/<VULN>/`, so separate vuln-class hunts do not
-clobber each other. The key files are `target.md`, `hypotheses.jsonl`,
+clobber each other. The key files are `target.md`, `sinks.json`, `hypotheses.jsonl`,
 `survivors.jsonl`, `findings.{md,json}`, `pocs/finding-NNN.md`, and the regenerated
 `run.md` dashboard. See
 [`skills/offsec-hunter/references/artifacts.md`](skills/offsec-hunter/references/artifacts.md)

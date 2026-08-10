@@ -10,21 +10,31 @@ This is part of an **authorized** security task: identify vulnerabilities that a
 
 **The goal is not code review. The goal is to break the target.**
 
-This skill is the **orchestrator**. It runs five composable skills, each gated on the
+This skill is the **orchestrator**. It runs six composable skills, each gated on the
 previous one's file artifact:
 
-1. `map-attack-surface` — recon → `surface-map.json`
-2. `scope-target` — confirm the hunting goal → `hunts/<VULN>/target.md`
-3. `raise-hypotheses` — cheap fan-out, recall → `hunts/<VULN>/hypotheses.jsonl`
-4. `break-hypotheses` — strong adversarial validation → `hunts/<VULN>/survivors.jsonl`
-5. `prove-exploit` — confirmed findings + working PoC → `hunts/<VULN>/findings.{md,json}` + `pocs/`
+1. **REQUIRED SUB-SKILL:** Use the `map-attack-surface` skill → `surface-map.json`
+   — **comprehension only: no vuln classes, no risk verdicts, no guard analysis, no sink hunting.**
+2. **REQUIRED SUB-SKILL:** Use the `scope-target` skill → `hunts/<VULN>/target.md`
+   — confirm the vuln class and threat model; interactive asks, headless logs.
+3. **REQUIRED SUB-SKILL:** Use the `locate-sinks` skill → `hunts/<VULN>/sinks.json`
+   — **security judgment begins here**; sole assigner of `sink-N` ids.
+4. **REQUIRED SUB-SKILL:** Use the `raise-hypotheses` skill → `hunts/<VULN>/hypotheses.jsonl`
+   — cheap wide fan-out, optimise recall not precision.
+5. **REQUIRED SUB-SKILL:** Use the `break-hypotheses` skill → `hunts/<VULN>/survivors.jsonl`
+   — adversarial: try to refute each claim, not confirm it.
+6. **REQUIRED SUB-SKILL:** Use the `prove-exploit` skill → `hunts/<VULN>/findings.{md,json}` + `pocs/`
+   — no PoC, no finding.
 
-User-facing mental model: **recon → goal → exploit**.
+User-facing mental model: **understand → goal → hunt → exploit**.
+
+Steps 1–2 are comprehension and scoping and carry no security verdicts. **Security
+judgment begins at `locate-sinks`.**
 
 ## How this skill runs
 
-Instruction-driven and platform-neutral. Map every action ("dispatch a subagent",
-"cheap model for breadth, strong model for validation") to your platform's tools per the
+Instruction-driven and platform-neutral. Map every action ("use a step skill", "dispatch a
+subagent", "select a model where the platform allows it") to your platform's tools per the
 **offsec-hunter platform guide** (`references/platform-tools.md`). Artifact layout, the
 two roots, `state.json`, and the gating/staleness rules are defined in the **offsec-hunter
 artifacts guide** (`references/artifacts.md`).
@@ -33,11 +43,21 @@ artifacts guide** (`references/artifacts.md`).
 
 Reliability comes from **artifact-gating**, not trust:
 
-1. Create one task/todo per step and complete them in order.
-2. Each step writes a file artifact; the next step begins by reading it. Never start a
+1. **Before step 1**, resolve the two roots and the run mode, then write `state.json`.
+   Every later step reads them from there. Do this before any other action. Write it
+   **without a `vuln` field** — `scope-target` adds that in step 2. `state.json` is step 1's
+   only input channel, so leaving the class out of it is what keeps step 1 class-blind.
+2. **Before step 1, also read the artifacts guide and the platform guide**
+   (`references/artifacts.md`, `references/platform-tools.md`). The first defines
+   `state.json`, the artifact tree, and the gating rules; the second maps this skill's
+   actions onto your platform's real capabilities. Neither is optional.
+3. **Each step is a separate skill — use it, do not do its work yourself.** The step list
+   above gives each step's name and its single hardest constraint; the skill itself carries
+   the procedure, the gate, and the schema. Never execute a step from the one-line summary.
+   Announce each one as you start it: "Using `<skill>` to <purpose>".
+4. Create one task/todo per step and complete them in order.
+5. Each step writes a file artifact; the next step begins by reading it. Never start a
    step whose input artifact is missing or stale.
-3. Invoke each step **by name** (e.g. "invoke the `scope-target` skill"). Never reach into
-   another skill's directory.
 
 ### Roots — resolve once
 
@@ -63,11 +83,11 @@ Declare the run mode and record it in `state.json`:
 Print a compact progress line read from `state.json` (e.g. `✅ 1–2  ▶ 3`) so a returning
 human or a resuming agent knows the next action.
 
-## Round loop (steps 3–4)
+## Round loop (steps 4–5)
 
-Steps 1 (map) and 2 (scope) run once. Steps 3 (raise) and 4 (break) are the body of a
-**round loop**. Step 5 (prove) runs once at loop exit. With a single productive round this
-is exactly the old single-pass flow.
+Steps 1 (map), 2 (scope) and 3 (locate) run once. Steps 4 (raise) and 5 (break) are the
+body of a **round loop**. Step 6 (prove) runs once at loop exit. With a single productive
+round this is exactly the old single-pass flow.
 
 **Initialization:** Before the first `raise-hypotheses` run, the orchestrator initializes
 `round=1`, `dry_streak=0`, `families=[]`, and `round_log=[]` in `state.json`.
@@ -96,8 +116,8 @@ Each round:
      blocked family reopens **only when** a hypothesis names a guard or step absent from
      that family's recorded mechanisms — synthesis makes this determination by comparing
      the `mechanism` field machine-to-machine, never by comparing prose or labels.
-   - **Redirect**: pull agents off crowded/blocked families and point them at mapped sinks
-     no family covers yet; keep at least one agent on each still-productive incompatible
+   - **Redirect**: pull agents off crowded/blocked families and point them at sinks in
+     `sinks.json` no family covers yet; keep at least one agent on each still-productive incompatible
      route so routes stay alive across rounds.
    - Append a one-line entry to `state.json.round_log`. Increment
      `dry_streak` on a dry round; reset it to 0 on a productive round (one that produced a
@@ -115,6 +135,19 @@ skills, conversation, or files already read. Every raise/break delegation prompt
 `sink-N` id + its family, and a one-line threat-model summary. The family registry stays
 orchestrator-only; a subagent receives only its slice in-prompt.
 
+**Step 1 is the inverse case: delegated and deliberately class-blind.** On platforms where
+the skill forks its own context, that isolation is automatic. Where it does not, dispatch
+`map-attack-surface` to a subagent explicitly. Its prompt carries `target_root`,
+`output_root`, and the artifact path — and **must not contain the vuln class, the threat
+model, or any word naming a vulnerability category.** Do not put the class in step 1's
+todo or plan label either; "Fresh RCE hunt" as a heading is itself contamination.
+
+Why isolation rather than instruction: the map is target-level and reused by every
+vuln-class hunt against the same commit. An agent that knows the class cannot produce a
+class-agnostic map — it will select the flows that class cares about and frame boundaries as
+defences against it, while believing it is doing comprehension. Withholding the class is the
+mechanism; asking the agent not to think about it is not.
+
 **The orchestrator is the sole id authority.** Under subagent isolation, parallel raise/break
 subagents cannot see each other's ids and would collide if left to invent their own. So
 subagents never assign `h-N`, `family`, or `chain`: they return untagged judgments keyed
@@ -125,7 +158,7 @@ dedups, and writes the line to `hypotheses.jsonl` or `survivors.jsonl`.
 
 ### run.md dashboard
 
-The orchestrator **regenerates** `run.md` from `state.json` + `findings.json` on **any** step-5
+The orchestrator **regenerates** `run.md` from `state.json` + `findings.json` on **any** step-6
 completion (loop exit or steered re-run). The dashboard shows: rounds executed, the family
 registry (open/blocked + counts), the per-round lines, and the final findings with their
 trace ids. This single-owner regenerate ensures consistency across steered re-runs (idempotent,
@@ -135,9 +168,12 @@ no appending).
 
 Hunt for: **the vuln class the user provided when invoking this skill (or `broad` if none)**
 
-The chosen class is confirmed inside `scope-target` and written into `target.md`. If no
-class was provided: interactive → `scope-target` asks; headless → default to `broad` and
-log it.
+The chosen class is confirmed inside `scope-target` and written into `target.md` and
+`state.json`. If no class was provided: interactive → `scope-target` asks; headless →
+default to `broad` and log it.
+
+**Hold the class out of step 1.** Note where this section sits: everything above it — the
+map — is built before the class is recorded anywhere step 1 can reach. Keep it that way.
 
 ## Scope — the default threat model (a proposal, not a fixed rule)
 
@@ -158,10 +194,12 @@ Held regardless of target and **not** softened at the checkpoint:
 
 ## Budget orchestration
 
-Cap concurrent subagents. Cheap/fast model for breadth (`raise-hypotheses`); escalate to a
-stronger model only on survivors (`break-hypotheses`); reserve the orchestrator (strongest
-model) for `prove-exploit`. The biggest saving is reusing a fresh map
-(`map-attack-surface` skip).
+Cap concurrent subagents. Where the platform supports per-task model selection, use a
+cheap/fast model for breadth (`raise-hypotheses`) and escalate to a stronger model only on
+survivors (`break-hypotheses`), reserving the strongest model for `prove-exploit`. Where it
+does not — see the platform guide — every step runs on the session model, and control comes
+from artifact gating and the dry-round stop rule rather than from cost tiering. The biggest
+saving on any platform is reusing a fresh map (`map-attack-surface` skip).
 
 ## Steering — redirecting a run
 
@@ -170,13 +208,14 @@ artifact at the right level and re-running only the steps that go stale:
 
 | Dissatisfaction | Edit | Re-runs |
 |---|---|---|
-| Missed an entry point | `surface-map.json` | 1 → 2–5 |
-| Wrong goal / class / attacker position | `target.md` | 3–5 |
-| Add or restore a lead | `hypotheses.jsonl` | 4–5 |
-| Wrongly killed a candidate | annotate the dropped candidate | 4–5 (that one) |
-| PoC doesn't fire | the finding | 5 (that finding) |
+| Missed an entry point or flow | `surface-map.json` | 1 → 2–6 |
+| Wrong goal / class / attacker position | `target.md` | 3–6 |
+| Missed a sink | `sinks.json` | 4–6 |
+| Add or restore a lead | `hypotheses.jsonl` | 5–6 |
+| Wrongly killed a candidate | annotate the dropped candidate | 5–6 (that one) |
+| PoC doesn't fire | the finding | 6 (that finding) |
 
-After step 5: interactive → offer "not satisfied? tell me how to redirect"; headless →
+After step 6: interactive → offer "not satisfied? tell me how to redirect"; headless →
 accept a feedback string. Map the feedback to the artifact level above, edit/annotate that
 artifact (so the staleness check fires), append the steer to the `state.json` steer log,
 and re-run from there. Steered re-runs **merge additively** (see `prove-exploit`); they

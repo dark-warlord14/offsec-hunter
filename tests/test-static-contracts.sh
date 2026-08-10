@@ -16,9 +16,10 @@ O="skills/offsec-hunter/SKILL.md"
 assert_file_contains "$O" '^name: offsec-hunter' "orchestrator frontmatter name"
 assert_file_contains "$O" 'map-attack-surface' "orchestrator names step 1"
 assert_file_contains "$O" 'scope-target' "orchestrator names step 2"
-assert_file_contains "$O" 'raise-hypotheses' "orchestrator names step 3"
-assert_file_contains "$O" 'break-hypotheses' "orchestrator names step 4"
-assert_file_contains "$O" 'prove-exploit' "orchestrator names step 5"
+assert_file_contains "$O" 'locate-sinks' "orchestrator names step 3"
+assert_file_contains "$O" 'raise-hypotheses' "orchestrator names step 4"
+assert_file_contains "$O" 'break-hypotheses' "orchestrator names step 5"
+assert_file_contains "$O" 'prove-exploit' "orchestrator names step 6"
 assert_file_contains "$O" 'interactive' "orchestrator documents interactive mode"
 assert_file_contains "$O" 'headless' "orchestrator documents headless mode"
 assert_file_contains "$O" 'state\.json' "orchestrator references state.json"
@@ -27,11 +28,24 @@ assert_file_contains "$O" '[Oo]utput root' "orchestrator resolves output root"
 assert_file_contains "$O" '[Ss]teer' "orchestrator documents steering"
 assert_file_contains "$O" 'artifacts\.md' "orchestrator references artifacts guide by name"
 assert_file_exists "skills/offsec-hunter/references/artifacts.md" "artifacts guide exists"
-assert_no_cross_skill_paths "no cross-skill relative paths"
+assert_file_contains "$O" 'REQUIRED SUB-SKILL' "orchestrator uses the required-sub-skill marker"
+assert_file_contains "$O" 'do not do its work yourself|Never execute a step from the one-line' "orchestrator forbids inlining a step"
+assert_file_not_contains "$O" 'Never reach into' "orchestrator does not forbid reading a sibling skill"
+assert_file_contains "$O" 'Using .<skill>. to|Announce each one' "orchestrator announces each step"
 
 # --- map-attack-surface (Task 3) ---
 M="skills/map-attack-surface/SKILL.md"
 assert_file_contains "$M" '^name: map-attack-surface' "step1 frontmatter name"
+assert_file_contains "$M" '^context: fork' "step1 forks into an isolated context"
+assert_file_contains "$M" '^background: false' "step1 fork blocks the invoking turn"
+assert_file_contains "$M" 'isolated context|cannot see the orchestrator' "step1 states why it is isolated"
+assert_file_contains "$M" '[Ss]elf-check before writing' "step1 self-checks before writing the map"
+assert_file_contains "$M" 'verdict word' "step1 forbids verdict words in the artifact"
+assert_file_contains "$M" 'no .vuln. field|carries no .vuln|ignore it' "step1 told state.json has no vuln field"
+assert_file_contains "$O" 'class-blind' "orchestrator delegates step 1 class-blind"
+assert_file_contains "$O" 'must not contain the vuln class' "orchestrator forbids injecting the class into step 1"
+assert_file_contains "$O" 'without a .vuln. field' "orchestrator writes state.json without vuln"
+assert_file_contains "skills/offsec-hunter/references/artifacts.md" 'no .vuln. field until|ABSENT during step 1' "artifacts documents deferred vuln field"
 assert_file_contains "$M" 'surface-map\.json' "step1 writes surface-map.json"
 assert_file_contains "$M" 'rev-parse HEAD' "step1 commit-stamps freshness"
 assert_file_contains "$M" 'surface-map\.md' "step1 references its schema"
@@ -52,43 +66,51 @@ assert_file_contains "$S" '[Ww]in condition' "step2 covers win condition"
 
 # --- raise-hypotheses (Task 5) ---
 R="skills/raise-hypotheses/SKILL.md"
-assert_file_contains "$R" '^name: raise-hypotheses' "step3 frontmatter name"
-assert_file_contains "$R" 'target\.md' "step3 reads target.md"
-assert_file_contains "$R" 'scope-target first' "step3 actionable missing-input error"
-assert_file_contains "$R" 'hypotheses\.jsonl' "step3 writes hypotheses.jsonl"
-assert_file_contains "$R" '[Rr]ecall' "step3 optimizes recall"
-assert_file_contains "$R" '(cheap|fast)' "step3 uses cheap/fast model"
+assert_file_contains "$R" '^name: raise-hypotheses' "step4 frontmatter name"
+assert_file_contains "$R" 'target\.md' "step4 reads target.md"
+assert_file_contains "$R" 'locate-sinks first' "step4 actionable missing-input error"
+assert_file_contains "$R" 'sinks\.json' "step4 reads sinks.json"
+assert_file_contains "$R" 'hypotheses\.jsonl' "step4 writes hypotheses.jsonl"
+assert_file_contains "$R" '[Rr]ecall' "step4 optimizes recall"
+assert_file_contains "$R" '(cheap|fast)' "step4 uses cheap/fast model"
 
 # --- break-hypotheses (Task 6) ---
 B="skills/break-hypotheses/SKILL.md"
-assert_file_contains "$B" '^name: break-hypotheses' "step4 frontmatter name"
-assert_file_contains "$B" 'hypotheses\.jsonl' "step4 reads hypotheses.jsonl"
-assert_file_contains "$B" 'raise-hypotheses first' "step4 actionable missing-input error"
-assert_file_contains "$B" 'survivors\.jsonl' "step4 writes survivors.jsonl"
-assert_file_contains "$B" '(break the claim|try to break)' "step4 is adversarial"
-assert_file_contains "$B" '(stronger|strong)' "step4 uses a stronger model"
+assert_file_contains "$B" '^name: break-hypotheses' "step5 frontmatter name"
+assert_file_contains "$B" 'hypotheses\.jsonl' "step5 reads hypotheses.jsonl"
+assert_file_contains "$B" 'raise-hypotheses first' "step5 actionable missing-input error"
+assert_file_contains "$B" 'survivors\.jsonl' "step5 writes survivors.jsonl"
+assert_file_contains "$B" '(break the claim|try to break)' "step5 is adversarial"
+assert_file_contains "$B" '(stronger|strong)' "step5 uses a stronger model"
 
 # --- prove-exploit (Task 7) ---
 P="skills/prove-exploit/SKILL.md"
-assert_file_contains "$P" '^name: prove-exploit' "step5 frontmatter name"
-assert_file_contains "$P" 'survivors\.jsonl' "step5 reads survivors.jsonl"
-assert_file_contains "$P" 'break-hypotheses first' "step5 actionable missing-input error"
-assert_file_contains "$P" 'findings\.json' "step5 emits machine-readable findings"
-assert_file_contains "$P" 'findings\.md' "step5 emits human-readable findings"
-assert_file_contains "$P" 'no exploitable findings' "step5 has empty-results report"
-assert_file_contains "$P" 'entry-point \+ sink' "step5 documents additive-merge dedup key"
-assert_file_contains "$P" 'pocs/finding-NNN\.md' "step5 writes minimal markdown PoCs"
+assert_file_contains "$P" '^name: prove-exploit' "step6 frontmatter name"
+assert_file_contains "$P" 'survivors\.jsonl' "step6 reads survivors.jsonl"
+assert_file_contains "$P" 'break-hypotheses first' "step6 actionable missing-input error"
+assert_file_contains "$P" 'findings\.json' "step6 emits machine-readable findings"
+assert_file_contains "$P" 'findings\.md' "step6 emits human-readable findings"
+assert_file_contains "$P" 'no exploitable findings' "step6 has empty-results report"
+assert_file_contains "$P" 'entry-point \+ sink' "step6 documents additive-merge dedup key"
+assert_file_contains "$P" 'pocs/finding-NNN\.md' "step6 writes minimal markdown PoCs"
+
+L="skills/locate-sinks/SKILL.md"
 
 # --- shared-refs do not leak into step skills (all dirs now exist) ---
-for d in map-attack-surface scope-target raise-hypotheses break-hypotheses prove-exploit; do
+for d in map-attack-surface scope-target locate-sinks raise-hypotheses break-hypotheses prove-exploit; do
   assert_file_absent "skills/$d/references/platform-tools.md" "$d has no platform-tools.md"
   assert_file_absent "skills/$d/references/artifacts.md" "$d has no artifacts.md"
 done
 
-# --- map dependency sinks + ids (Task 3) ---
-assert_file_contains "$M" 'sink-[0-9]|stable id' "step1 assigns stable sink ids"
-assert_file_contains "$M" '[Dd]ependenc' "step1 conditionally indexes vendored dependencies"
-assert_file_contains "$M" 'skip this|no.*dependency sinks' "step1 dependency indexing is conditional"
+# --- map is comprehension-only (2026-08-06) ---
+assert_file_not_contains "$M" 'sink-[0-9]|high-risk sink|[Ss]inks —' "step1 emits no sinks"
+assert_file_contains "$M" '[Cc]omprehension only' "step1 declares comprehension-only"
+assert_file_contains "$M" 'asm-[0-9]|[Aa]ssumption' "step1 records assumptions"
+assert_file_contains "$M" 'reachab' "step1 keeps reachability pruning as its bound"
+assert_file_contains "$M" 'language|ecosystem' "step1 is language-agnostic"
+assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'asm-[0-9]' "surface-map schema has assumption ids"
+assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'language|ecosystem' "surface-map schema is language-agnostic"
+assert_file_not_contains "skills/map-attack-surface/references/surface-map.md" '"sinks"' "surface-map schema has no sinks array"
 
 # --- Orchestrator round loop (Task 2) ---
 assert_file_contains "$O" '[Rr]ound loop' "orchestrator documents the round loop"
@@ -109,26 +131,29 @@ assert_file_contains "$A" '"families"' "artifacts documents family registry"
 assert_file_contains "$A" '"round_log"' "artifacts documents round_log"
 assert_file_contains "$A" 'sink-[0-9]' "artifacts documents stable sink ids"
 assert_file_contains "$A" '[Rr]esumable' "artifacts documents resumable loop"
+assert_file_contains "$A" 'sinks\.json' "artifacts documents sinks.json"
+assert_file_contains "$A" 'locate-sinks' "artifacts documents the locate-sinks step"
 assert_file_contains "$A" '"chain"' "artifacts documents chain field"
+assert_file_contains "$A" 'stale when .surface-map\.json. or .target\.md.' "artifacts ties sinks.json staleness to both inputs"
 
 # --- raise round-aware + ids (Task 4) ---
-assert_file_contains "$R" '"family"' "step3 tags hypotheses with a family"
-assert_file_contains "$R" '"sink"' "step3 references the sink id"
-assert_file_contains "$R" '[Rr]ound' "step3 is round-aware"
-assert_file_contains "$R" 'output_root|inject' "step3 injects context into subagents"
+assert_file_contains "$R" '"family"' "step4 tags hypotheses with a family"
+assert_file_contains "$R" '"sink"' "step4 references the sink id"
+assert_file_contains "$R" '[Rr]ound' "step4 is round-aware"
+assert_file_contains "$R" 'output_root|inject' "step4 injects context into subagents"
 
 # --- break chaining + trace (Task 5) ---
-assert_file_contains "$B" '[Cc]hain' "step4 documents bug-chaining"
-assert_file_contains "$B" '"chain"' "step4 records chain field on survivors"
-assert_file_contains "$B" '"severity"' "step4 carries severity"
-assert_file_contains "$B" '"confidence"' "step4 carries confidence"
-assert_file_contains "$B" '[Dd]ependenc' "step4 chains dependency bugs when present"
+assert_file_contains "$B" '[Cc]hain' "step5 documents bug-chaining"
+assert_file_contains "$B" '"chain"' "step5 records chain field on survivors"
+assert_file_contains "$B" '"severity"' "step5 carries severity"
+assert_file_contains "$B" '"confidence"' "step5 carries confidence"
+assert_file_contains "$B" '[Dd]ependenc' "step5 chains dependency bugs when present"
 
 # --- prove trace + dashboard (Task 6) ---
-assert_file_contains "$P" '"survivor"' "step5 traces finding to survivor"
-assert_file_contains "$P" '"sink"' "step5 traces finding to sink"
-assert_file_contains "$P" '"confidence"' "step5 carries confidence"
-assert_file_contains "$P" 'run\.md' "step5 contributes to run.md dashboard"
+assert_file_contains "$P" '"survivor"' "step6 traces finding to survivor"
+assert_file_contains "$P" '"sink"' "step6 traces finding to sink"
+assert_file_contains "$P" '"confidence"' "step6 carries confidence"
+assert_file_contains "$P" 'run\.md' "step6 contributes to run.md dashboard"
 
 # --- v2: canonical state + resume (Task 9) ---
 assert_file_contains "$A" '"status": "looping"' "artifacts shows looping status"
@@ -171,7 +196,7 @@ assert_file_not_contains "$O" '\$ARGUMENTS' "orchestrator body has no \$ARGUMENT
 assert_file_not_contains "$S" '\$ARGUMENTS' "scope body has no \$ARGUMENTS token"
 
 # --- v2: descriptions + standalone guard (Task 17) ---
-for V in "$M" "$S" "$R" "$B" "$P"; do
+for V in "$M" "$S" "$L" "$R" "$B" "$P"; do
   assert_file_contains "$V" '[Uu]se when' "step description has a when-to-use clause: $V"
   assert_file_contains "$V" 'orchestrator first|run .offsec-hunter. first|run the offsec-hunter' "step has standalone-trigger guard: $V"
 done
@@ -179,9 +204,23 @@ done
 # --- v2: schema fields (Task 18) ---
 assert_file_contains "$A" 'guards' "artifacts documents guards field on survivors"
 assert_file_contains "$A" 'origin' "artifacts documents origin field on sinks"
-assert_file_contains "skills/map-attack-surface/references/surface-map.md" 'origin' "surface-map schema includes origin field"
+assert_file_contains "skills/locate-sinks/references/sinks.md" 'origin' "sinks schema includes origin field"
 
 # --- v2: rounds=1 regression (Task 18) ---
 assert_file_contains "$O" 'single(-| )?pass|single productive round' "orchestrator preserves single-pass at rounds=1"
+
+# --- locate-sinks (2026-08-06) ---
+L="skills/locate-sinks/SKILL.md"
+assert_file_contains "$L" '^name: locate-sinks' "step3 frontmatter name"
+assert_file_contains "$L" 'surface-map\.json' "step3 reads surface-map.json"
+assert_file_contains "$L" 'target\.md' "step3 reads target.md"
+assert_file_contains "$L" 'scope-target first' "step3 actionable missing-input error"
+assert_file_contains "$L" 'sinks\.json' "step3 writes sinks.json"
+assert_file_contains "$L" 'sink-[0-9]|stable id' "step3 assigns stable sink ids"
+assert_file_contains "$L" '[Dd]ependenc' "step3 conditionally indexes vendored dependencies"
+assert_file_contains "$L" 'skip this|no.*dependency sinks' "step3 dependency indexing is conditional"
+assert_file_contains "$L" 'sinks\.md' "step3 references its schema"
+assert_file_contains "$L" 'every language|ecosystem' "step3 is language-agnostic"
+assert_file_exists "skills/locate-sinks/references/sinks.md" "sinks schema exists"
 
 summary

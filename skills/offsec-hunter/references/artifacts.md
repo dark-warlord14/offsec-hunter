@@ -18,6 +18,7 @@ orchestrator and recorded in `state.json`:
   hunts/
     <VULN>/                   # per-hunt namespace (e.g. SSRF, RCE)
       target.md
+      sinks.json
       hypotheses.jsonl
       survivors.jsonl
       findings.md
@@ -33,7 +34,7 @@ orchestrator and recorded in `state.json`:
   "target_root": "/abs/path/to/target",
   "output_root": "/abs/path/to/target/.offsec-hunter",
   "mode": "interactive",
-  "vuln": "RCE",
+  "vuln": "RCE",                    // written by scope-target (step 2); ABSENT during step 1
   "round": 2,
   "dry_streak": 1,
   "families": [
@@ -43,6 +44,7 @@ orchestrator and recorded in `state.json`:
   "steps": {
     "map-attack-surface": {"status": "done", "artifact": "surface-map.json", "commit": "<HEAD>", "at": "<iso8601>"},
     "scope-target":       {"status": "done", "artifact": "hunts/RCE/target.md", "input_hash": "<sha256>", "at": "<iso8601>"},
+    "locate-sinks":       {"status": "done", "artifact": "hunts/RCE/sinks.json", "input_hash": "<sha256>", "at": "<iso8601>"},
     "raise-hypotheses":   {"status": "looping", "last_round": 2},
     "break-hypotheses":   {"status": "looping", "last_round": 2},
     "prove-exploit":      {"status": "pending"}
@@ -62,6 +64,15 @@ orchestrator and recorded in `state.json`:
 - A step refuses to run when its input artifact is missing and prints the exact fix
   (e.g. "no `surface-map.json` — run `map-attack-surface` first").
 - `surface-map.json` is **fresh** iff its `commit == git rev-parse HEAD`; otherwise rebuild.
+- `surface-map.json` is **class-agnostic** — it carries no vuln classes and no sinks, so
+  every vuln-class hunt against the same commit reuses it. Class-scoped sinks live in
+  `hunts/<VULN>/sinks.json`, which is stale when `surface-map.json` or `target.md` changes.
+- **`state.json` carries no `vuln` field until `scope-target` (step 2) writes it.**
+  `state.json` is step 1's only input channel, and step 1 runs in an isolated context that
+  cannot see the conversation. Withholding `vuln` until step 2 means step 1 cannot learn the
+  class even in principle. A `surface-map.json` whose values name a vulnerability class or
+  contain a verdict is **invalid regardless of its commit stamp** — rebuild it rather than
+  reuse it, or every later hunt inherits that class's blind spot.
 - Each downstream artifact records the hash of its inputs (`input_hash` in `state.json`).
   The `input_hash` staleness gate **governs steering only** (user-driven redirects that
   re-run only the affected steps). Inside the loop, `raise-hypotheses` and
@@ -90,7 +101,11 @@ chainability flag (not a built `chain`). The orchestrator assigns the globally-u
 (`h-N` / `s-N`) and `family` only when it writes the line, and assembles the ordered `chain`
 itself at synthesis.
 
-- `surface-map.json` sink: `"id": "sink-3"`, `"origin": "target | dependency"` (marking vendored vs target sinks).
+- `surface-map.json` (comprehension only): `entry_points[].id` = `"ep-1"`,
+  `trust_boundaries[].id` = `"tb-1"`, `assumptions[].id` = `"asm-1"`. No sinks, no vuln
+  classes.
+- `sinks.json` sink: `"id": "sink-3"`, `"class"`, `"origin": "target | dependency"`
+  (marking vendored vs target sinks), assigned by `locate-sinks`.
 - `hypotheses.jsonl` line: adds `"family"`, `"sink"`, `"round"` (the round it was raised
   in), and `"mechanism"` (sink + guard-bypass).
 - `survivors.jsonl` line: adds `"hypothesis"`, `"sink"`, `"chain": [...]` (ordered hypothesis
